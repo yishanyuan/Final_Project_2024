@@ -4,15 +4,16 @@ import json
 import os
 
 # Define relative paths
-data_folder = './data'
 artifacts_folder = './artifacts'
-input_jsonl_path = os.path.join(data_folder, 'results_raw.jsonl')
-output_csv_path = os.path.join(artifacts_folder, 'cleaned_data.csv')
+data_folder = './data'
+input_jsonl_path = os.path.join(data_folder, 'raw_results.jsonl')
+iso_country_codes_path = os.path.join(artifacts_folder, 'iso_country_codes.csv')
+output_clean_data_path = os.path.join(artifacts_folder, 'clean_data.csv')
 
 # Create artifacts directory if it doesn't exist
 os.makedirs(artifacts_folder, exist_ok=True)
 
-# Load the JSONL file
+# Step 1: Load the JSONL file and generate clean_data.csv
 data = []
 with open(input_jsonl_path, 'r') as file:
     for line in file:
@@ -48,22 +49,45 @@ def extract_stars_label(stars):
 
 df['stars_label'] = df['stars'].apply(extract_stars_label)
 
-# Count the symbol of dollars and catergorize the prices
-def count_symbols(price):
-    if isinstance(price, str):
-        return len(re.findall(r'[^\w\s]', price))
-    return 0
-
-df['price_symbol_count'] = df['price'].apply(count_symbols)
-
 # Drop "price" and "stars" columns
 df = df.drop(columns=['price', 'stars'], errors='ignore')
 
-# Keep the "facilities_services" column
-if 'facilities_services' not in df.columns:
-    df['facilities_services'] = None
+# Save intermediate clean_data.csv
+df.to_csv(output_clean_data_path, index=False)
 
-# Save the cleaned data to CSV
-df.to_csv(output_csv_path, index=False)
+# Step 2: Replace the country column with corrected names and map to ISO codes
+iso_country_codes = pd.read_csv(iso_country_codes_path)
 
-print(f"Cleaned data saved to {output_csv_path}")
+# Map the "country" column in cleaned_data to the "Country" column in iso_country_codes
+country_to_iso = dict(zip(iso_country_codes['Country'], iso_country_codes['ISO Code']))
+
+# Define a mapping for unmapped countries
+unmapped_countries = {
+    "Mainland": "China",
+    "Kong": "Hong Kong",
+    "Dhabi": "United Arab Emirates",
+    "Dubai": "United Arab Emirates",
+    "Kingdom": "United Kingdom",
+    "Korea": "Korea, Republic of",
+    "Macau": "Macao",
+    "Netherlands": "Netherlands, Kingdom of the",
+    "Repblic": "Czechia",
+    "Trkiye": "TÃ¼rkiye",
+    "USA": "United States of America",
+    "Vietnam": "Viet Nam",
+}
+
+# Update the country column in df for unmapped countries
+df['country'] = df['country'].replace(unmapped_countries)
+
+# Map the ISO Code using the updated country column
+df['ISO Code'] = df['country'].map(country_to_iso)
+
+# Add a unique index as the first column
+df.reset_index(inplace=True)
+df.rename(columns={"index": "UniqueID"}, inplace=True)
+
+# Save the final cleaned data with ISO Code
+df.to_csv(output_clean_data_path, index=False)
+
+print(f"Final cleaned data with ISO codes saved to {output_clean_data_path}")
