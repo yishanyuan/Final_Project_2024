@@ -1,4 +1,12 @@
 from common import get_soup
+import googlemaps
+import requests
+import os
+import sys
+import dotenv
+dotenv.load_dotenv(".env")
+GOOGLE_PLACE_API_KEY = os.environ["GOOGLE_PLACE_API_KEY"]
+map_client = googlemaps.Client(GOOGLE_PLACE_API_KEY)
 
 def get_name(soup):
     """ Extracts the title from the BeautifulSoup instance representing a restaurant page as a string."""
@@ -16,6 +24,11 @@ def get_address(soup):
 def get_price(soup):
     res_price = soup.find_all("div", class_ = "data-sheet__block--text")[1].getText().split()[0].strip()
     return res_price
+
+def get_type_food(soup):
+    res_type = soup.find_all("div", class_ = "data-sheet__block--text")[1].getText().split()[2:].strip()
+    return res_type
+
 
 def get_stars(soup):
     res_stars = soup.find_all("div", class_ = ("section section-main"))[0]
@@ -46,26 +59,56 @@ def get_facilities_services_info(soup):
     
     return facil_serv_list
 
-"""
-def get_latitude_longitude(soup):
-    res_lat_lon = soup.find_all("section", class_ = "section section-main")[1]
-    lat_lon = res_lat_lon.find_all("div", class_ = "place-name")
-    return lat_lon
 
-print(get_latitude_longitude(get_soup("https://guide.michelin.com/en/pulau-pinang/my-george-town/restaurant/lum-lai-duck-meat-koay-teow-th-ng")))
-print(get_latitude_longitude(get_soup("https://guide.michelin.com/en/kuala-lumpur-region/kuala-lumpur/restaurant/leen-s")))
-print(get_latitude_longitude(get_soup("https://guide.michelin.com/en/kuala-lumpur-region/kuala-lumpur/restaurant/frangipaani")))
+def get_res_lat_long(soup):
+    response = map_client.places(query = get_name(soup))
+    results = response.get("results")
+    if len(results) > 0:
+        lat_long = results[0]["geometry"]["location"]
+    else:
+        lat_long = "N/A"
+    return lat_long
+
 """
+def get_res_information(soup):
+    response = map_client.places(query = get_name(soup))
+    results = response.get("results")
+    if len(results) > 0:
+        rating = results[0]["rating"]
+        lat_long = results[0]["geometry"]["location"]
+        num_user_reviews = results[0]["user_ratings_total"]
+    else:
+        rating = "N/A"
+        lat_long = "N/A"
+        num_user_reviews = "N/A"
+    dict_info = {
+        "rating": rating,
+        "latitude and longitude": lat_long,
+        "numbers of reviews": num_user_reviews
+    }
+
+    return dict_info
+"""
+
+
 
 def scrape_res_dict(res_url):
     soup = get_soup(res_url)
+    #dict_info = get_res_information(soup)
     scraped_res_dict = {
         "name": get_name(soup),
         "address": get_address(soup),
         "price": get_price(soup),
         "stars": get_stars(soup),
         "description": get_description(soup),
-        "facilities_services": get_facilities_services_info(soup)
+        "facilities_services": get_facilities_services_info(soup),
+        #"rating": dict_info["rating"],
+        "latitude and longitude": get_res_lat_long(soup),
+        #"numbers of users' reviews": dict_info["numbers of reviews"]
+        "food type": get_type_food(soup)
+
+
+
     }
     
     return scraped_res_dict
@@ -77,4 +120,5 @@ def scrape_res(res_urls):
         scrape_res_info.append(scraped_res)
         
     return scrape_res_info
+
 
