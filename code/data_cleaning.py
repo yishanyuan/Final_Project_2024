@@ -8,7 +8,7 @@ artifacts_folder = './artifacts'
 data_folder = './data'
 input_jsonl_path = os.path.join(data_folder, 'raw_results.json')
 iso_country_codes_path = os.path.join(artifacts_folder, 'iso_country_codes.csv')
-output_clean_data_path = os.path.join(artifacts_folder, 'clean_data.csv')
+output_clean_data_path = os.path.join(artifacts_folder, 'cleaned_data.csv')
 
 # Create artifacts directory if it doesn't exist
 os.makedirs(artifacts_folder, exist_ok=True)
