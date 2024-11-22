@@ -26,7 +26,7 @@ def get_price(soup):
     return res_price
 
 def get_type_food(soup):
-    res_type = soup.find_all("div", class_ = "data-sheet__block--text")[1].getText().split()[2:].strip()
+    res_type = soup.find_all("div", class_ = "data-sheet__block--text")[1].getText().split("·")[1].strip()
     return res_type
 
 
