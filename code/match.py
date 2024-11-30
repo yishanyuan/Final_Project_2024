@@ -36,8 +36,8 @@ df['embedding'] = df['embedding'].apply(eval)
 
 def match(user_query):
     """
-    对用户输入生成嵌入，然后计算与每个餐馆描述嵌入的相似性。
-    返回最相似的20个独特餐馆信息。
+    Generate an embedding for the user's input and calculate its similarity to each restaurant's description embedding.
+    Return the 20 most similar, unique restaurants.
     """
     
     user_embedding = model.encode([user_query])[0]
