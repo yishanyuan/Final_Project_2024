@@ -1,73 +1,56 @@
-from database import engine
+import os
+import pandas as pd
 from sentence_transformers import SentenceTransformer
 
+
+os.chdir("C:/Users/AW/Documents/GitHub/Final_Project_2024")
+print("Current working directory:", os.getcwd())
+
+
+csv_path = "artifacts/cleaned_data.csv"
+output_csv_path = "artifacts/cleaned_data_with_embeddings.csv"
+
+
+if os.path.exists(csv_path):
+    print("File exists. Proceeding to load the CSV.")
+else:
+    print(f"File does not exist at path: {csv_path}")
+    exit()  
+
+
 model = SentenceTransformer("all-MiniLM-L6-v2")
+print("Model loaded successfully.")
 
 
-def pop():
-    """Get an review that has not got its embedding. 
-    This function will return a list of one review_id and its text."""
-
-    q = """
-        SELECT review_text, review_id
-        FROM california
-        WHERE embedding IS NULL
-        LIMIT 1
-        """
-
-    with engine.connect() as conn:
-        result = conn.execute(q)
-        row = result.fetchone()
-
-    if row:
-        review_list = []
-        review_list.append(row["review_text"])
-        review_list.append(row["review_id"])
-    else:
-        print("No rows found where embedding is null.")
-    return review_list
+try:
+    df = pd.read_csv(csv_path)
+    print("CSV file loaded successfully.")
+except FileNotFoundError:
+    print(f"The specified file does not exist at path: {csv_path}")
+    exit()
 
 
-def update_embedding(review_list):
-    """Use the review_list from def pop() as input.
-    Use sentence_transformer to encode the review_text and get its embedding,
-    and write this embedding into database through GCP."""
-
-    review_text = review_list[0]
-    review_id = review_list[1]
-    sentence = review_text
-    embedding_raw = model.encode(sentence)
-    embedding_list = (
-        embedding_raw.tolist()
-    )  # transform the encoding output to the list we can use.
-    embedding = str(
-        embedding_list
-    )  # to use pgvector,we have to make sure the embedding is string type(though it is actually a list).
-    
-    q = """
-        UPDATE california
-        SET embedding = %(embedding)s
-        WHERE review_id = %(review_id)s
-        """
-    
-    with engine.connect() as conn:
-        conn.execute(q, {"embedding": embedding, "review_id": review_id})
-    return
+print(df.head())
 
 
-def executing():
-    """Loop through def pop() and def update_embedding(review_list), 
-    untill there is no review without embedding."""
-    
-    while True:
-        popped_review_review_id = pop()
-        if popped_review_review_id:
-            update_embedding(popped_review_review_id)
-        else:
-            print("no empty rows of embedding")
-            break
-    return
+if 'description' not in df.columns:
+    print("The 'description' column does not exist in the CSV file.")
+    exit()
 
 
-if __name__ == "__main__":
-    executing()
+df["embedding"] = None
+
+
+print("Generating embeddings for each description...")
+for index, row in df.iterrows():
+    description = row["description"]
+    if pd.notna(description):  
+        
+        embedding = model.encode(description).tolist()
+        
+        df.at[index, "embedding"] = str(embedding) 
+
+print("Embeddings generated successfully.")
+
+df.to_csv(output_csv_path, index=False)
+print(f"Updated CSV file saved at: {output_csv_path}")
