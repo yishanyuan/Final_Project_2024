@@ -34,6 +34,12 @@ df['country'] = df['address'].apply(lambda x: x.split()[-1] if isinstance(x, str
 # Clean "description" column: keep text only
 df['description'] = df['description'].apply(lambda x: re.sub(r'[^a-zA-Z\s]', '', x) if isinstance(x, str) else x)
 
+# Clean "latitude and longitude" column: remove weird symbols
+df['latitude and longitude'] = df['latitude and longitude'].apply(lambda x: re.sub(r'[^\w\s]', '', x) if isinstance(x, str) else x)
+
+# Clean "food type" column: remove weird symbols
+df['food type'] = df['food type'].apply(lambda x: re.sub(r'[^\w\s]', '', x) if isinstance(x, str) else x)
+
 # Add "stars_label" column: extract the first two words to determine the label
 def extract_stars_label(stars):
     if isinstance(stars, str):
@@ -48,6 +54,14 @@ def extract_stars_label(stars):
     return None
 
 df['stars_label'] = df['stars'].apply(extract_stars_label)
+
+# Add "price_symbol_count" column: count the number of symbols in the price
+def count_symbols(price):
+    if isinstance(price, str):
+        return len(re.findall(r'[^\w\s]', price))
+    return 0
+
+df['price_symbol_count'] = df['price'].apply(count_symbols)
 
 # Drop "price" and "stars" columns
 df = df.drop(columns=['price', 'stars'], errors='ignore')

@@ -36,7 +36,7 @@ df['embedding'] = df['embedding'].apply(eval)
 
 def match(user_query):
     """
-    Generate an embedding for the user's input and calculate its similarity to each restaurant's description embedding. 
+    Generate an embedding for the user's input and calculate its similarity to each restaurant's description embedding.
     Return the 20 most similar, unique restaurants.
     """
     
