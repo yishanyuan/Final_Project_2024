@@ -1,5 +1,7 @@
+CREATE EXTENSION IF NOT EXISTS vector;
+
 -- Optional Step: Drop tables if they exist 
-DROP TABLE IF EXISTS cleaned_data CASCADE;
+DROP TABLE IF EXISTS cleaned_data_with_embeddings CASCADE;
 DROP TABLE IF EXISTS iso_country_codes CASCADE;
 
 -- Create the ISO Country Codes Table
@@ -12,7 +14,7 @@ CREATE TABLE iso_country_codes (
 CREATE INDEX iso_country_idx ON iso_country_codes (country);
 
 -- Create the Cleaned Data Table
-CREATE TABLE cleaned_data (
+CREATE TABLE cleaned_data_with_embeddings (
     UniqueID VARCHAR(255) PRIMARY KEY, 
     name VARCHAR(255) NOT NULL, 
     address TEXT, 
@@ -22,13 +24,18 @@ CREATE TABLE cleaned_data (
     food_type VARCHAR(100), 
     country VARCHAR(100), 
     stars_label VARCHAR(255), 
+    price_symbol_count VARCHAR(255),
+    embedding vector(384),
     ISO_Code CHAR(10), 
     CONSTRAINT fk_iso_code FOREIGN KEY (ISO_Code) REFERENCES iso_country_codes(iso_code) 
 );
 
 -- Create indexes in the cleaned_data table
-CREATE INDEX name_idx ON cleaned_data (name);
-CREATE INDEX food_type_idx ON cleaned_data (food_type);
-CREATE INDEX country_idx ON cleaned_data (country);
-CREATE INDEX stars_label_idx ON cleaned_data (stars_label);
+CREATE INDEX name_idx ON cleaned_data_with_embeddings (name);
+CREATE INDEX food_type_idx ON cleaned_data_with_embeddings (food_type);
+CREATE INDEX country_idx ON cleaned_data_with_embeddings (country);
+CREATE INDEX stars_label_idx ON cleaned_data_with_embeddings (stars_label);
+
+
+
 
