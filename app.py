@@ -84,3 +84,42 @@ selected_star = st.selectbox("Select Star Rating:", star_options)
 selected_country = st.selectbox("Select Country:", country_options)
 selected_cuisine = st.selectbox("Select Cuisine Type:", cuisine_options)
 
+# Search box after filters
+st.write("### Search Restaurants by Keywords")
+search_query = st.text_input("Enter keywords to search in restaurant descriptions:", value="")
+
+# Filter data based on user selection
+filtered_data = data.copy()
+
+if selected_star != "All":
+    filtered_data = filtered_data[filtered_data["stars_label"].astype(str) == selected_star]
+if selected_country != "All":
+    filtered_data = filtered_data[filtered_data["country"] == selected_country]
+if selected_cuisine != "All":
+    filtered_data = filtered_data[filtered_data["food type"] == selected_cuisine]
+
+# Apply search filter
+if search_query:
+    filtered_data = filtered_data[filtered_data["description"].str.contains(search_query, case=False, na=False)]
+
+# Prepare data for display
+filtered_data = filtered_data.rename(columns={
+    "name": "Restaurant Name",
+    "food type": "Cuisine",
+    "country": "Country",
+    "stars_label": "Star Rating"
+})
+columns_to_display = ["Restaurant Name", "Cuisine", "Country", "Star Rating"]
+
+# Reset index to ensure sequential numbering
+filtered_data = filtered_data[columns_to_display].reset_index(drop=True)
+filtered_data.index += 1  # Start index from 1
+filtered_data.index.name = "No."
+
+# Display the data with a wide format
+st.write("### Filtered Results")
+if filtered_data.empty:
+    st.write("No restaurants match the selected filters.")
+else:
+    st.dataframe(filtered_data, use_container_width=True)
+
