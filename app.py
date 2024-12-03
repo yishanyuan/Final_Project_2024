@@ -8,7 +8,7 @@ st.set_page_config(layout="wide")
 # Load the data
 @st.cache_data
 def load_data():
-    return pd.read_csv("artifacts/cleaned_data_with_embeddings.csv")
+    return pd.read_csv("/Users/diogenes/Documents/GitHub/Final_Project_2024/artifacts/cleaned_data_with_embeddings.csv")
 
 data = load_data()
 
@@ -42,14 +42,14 @@ fig = px.choropleth(
     color="Restaurant Count",
     hover_name="country",
     hover_data={
-        "Restaurant Count": True,  
-        "ISO Code": False,  
+        "Restaurant Count": True,
+        "ISO Code": False,
     },
     color_continuous_scale=px.colors.sequential.Plasma,
     title="Number of Michelin Restaurants by Country",
 )
 
-# layout for fullscreen map
+# Layout for fullscreen map
 fig.update_geos(
     showcoastlines=True, 
     coastlinecolor="LightGrey", 
@@ -58,7 +58,7 @@ fig.update_geos(
 )
 
 fig.update_layout(
-    margin=dict(l=0, r=0, t=30, b=0),  
+    margin=dict(l=0, r=0, t=30, b=0),
     coloraxis_colorbar=dict(
         title="Restaurant Count",
         ticks="outside",
@@ -67,8 +67,8 @@ fig.update_layout(
 
 # Fix hover template to display the hover text
 fig.update_traces(
-    hovertemplate="%{customdata}<extra></extra>",  
-    customdata=world_data["hover_text"],  
+    hovertemplate="%{customdata}<extra></extra>",
+    customdata=world_data["hover_text"],
 )
 
 # Display the full-screen world map
@@ -79,7 +79,10 @@ st.write("### Filter Michelin Restaurants")
 star_options = ["All"] + sorted(data["stars_label"].astype(str).unique())
 country_options = ["All"] + sorted(data["country"].unique())
 cuisine_options = ["All"] + sorted(data["food type"].dropna().unique())
+price_options = ["All", "1", "2", "3", "4"]  
 
+selected_price = st.selectbox("Select Price Level (1-4):", price_options)
+st.markdown("<small>Price Level Guide: 1 is the lowest (least expensive), and 4 is the highest (most expensive).</small>", unsafe_allow_html=True)
 selected_star = st.selectbox("Select Star Rating:", star_options)
 selected_country = st.selectbox("Select Country:", country_options)
 selected_cuisine = st.selectbox("Select Cuisine Type:", cuisine_options)
@@ -93,6 +96,8 @@ filtered_data = data.copy()
 
 if selected_star != "All":
     filtered_data = filtered_data[filtered_data["stars_label"].astype(str) == selected_star]
+if selected_price != "All":
+    filtered_data = filtered_data[filtered_data["price_symbol_count"].astype(str) == selected_price]  # Using price_symbol_count column
 if selected_country != "All":
     filtered_data = filtered_data[filtered_data["country"] == selected_country]
 if selected_cuisine != "All":
@@ -107,9 +112,10 @@ filtered_data = filtered_data.rename(columns={
     "name": "Restaurant Name",
     "food type": "Cuisine",
     "country": "Country",
-    "stars_label": "Star Rating"
+    "stars_label": "Star Rating",
+    "price_symbol_count": "Price Level"  # Renaming for display
 })
-columns_to_display = ["Restaurant Name", "Cuisine", "Country", "Star Rating"]
+columns_to_display = ["Restaurant Name", "Cuisine", "Country", "Star Rating", "Price Level"]
 
 # Reset index to ensure sequential numbering
 filtered_data = filtered_data[columns_to_display].reset_index(drop=True)
@@ -122,4 +128,3 @@ if filtered_data.empty:
     st.write("No restaurants match the selected filters.")
 else:
     st.dataframe(filtered_data, use_container_width=True)
-
