@@ -1,6 +1,10 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from code.match_sql import match
+from  code.gis_utils import query_data  # Import the GIS data querying function
+import folium
+from streamlit_folium import st_folium
 
 # Set Streamlit page configuration for wide layout
 st.set_page_config(layout="wide")
@@ -8,7 +12,7 @@ st.set_page_config(layout="wide")
 # Load the data
 @st.cache_data
 def load_data():
-    return pd.read_csv("/Users/diogenes/Documents/GitHub/Final_Project_2024/artifacts/cleaned_data_with_embeddings.csv")
+    return pd.read_csv("/Users/yuanyishan/Documents/Final_Project_2024/artifacts/cleaned_data_with_embeddings.csv")
 
 data = load_data()
 
@@ -49,10 +53,10 @@ fig = px.choropleth(
     title="Number of Michelin Restaurants by Country",
 )
 
-# Layout for fullscreen map
+# layout for fullscreen map
 fig.update_geos(
-    showcoastlines=True, 
-    coastlinecolor="LightGrey", 
+    showcoastlines=True,
+    coastlinecolor="LightGrey",
     showframe=False,
     projection_type="natural earth",
 )
@@ -79,10 +83,7 @@ st.write("### Filter Michelin Restaurants")
 star_options = ["All"] + sorted(data["stars_label"].astype(str).unique())
 country_options = ["All"] + sorted(data["country"].unique())
 cuisine_options = ["All"] + sorted(data["food type"].dropna().unique())
-price_options = ["All", "1", "2", "3", "4"]  
 
-selected_price = st.selectbox("Select Price Level (1-4):", price_options)
-st.markdown("<small>Price Level Guide: 1 is the lowest (least expensive), and 4 is the highest (most expensive).</small>", unsafe_allow_html=True)
 selected_star = st.selectbox("Select Star Rating:", star_options)
 selected_country = st.selectbox("Select Country:", country_options)
 selected_cuisine = st.selectbox("Select Cuisine Type:", cuisine_options)
@@ -96,8 +97,6 @@ filtered_data = data.copy()
 
 if selected_star != "All":
     filtered_data = filtered_data[filtered_data["stars_label"].astype(str) == selected_star]
-if selected_price != "All":
-    filtered_data = filtered_data[filtered_data["price_symbol_count"].astype(str) == selected_price]  # Using price_symbol_count column
 if selected_country != "All":
     filtered_data = filtered_data[filtered_data["country"] == selected_country]
 if selected_cuisine != "All":
@@ -112,10 +111,9 @@ filtered_data = filtered_data.rename(columns={
     "name": "Restaurant Name",
     "food type": "Cuisine",
     "country": "Country",
-    "stars_label": "Star Rating",
-    "price_symbol_count": "Price Level"  # Renaming for display
+    "stars_label": "Star Rating"
 })
-columns_to_display = ["Restaurant Name", "Cuisine", "Country", "Star Rating", "Price Level"]
+columns_to_display = ["Restaurant Name", "Cuisine", "Country", "Star Rating"]
 
 # Reset index to ensure sequential numbering
 filtered_data = filtered_data[columns_to_display].reset_index(drop=True)
@@ -128,3 +126,42 @@ if filtered_data.empty:
     st.write("No restaurants match the selected filters.")
 else:
     st.dataframe(filtered_data, use_container_width=True)
+
+# Streamlit app to visualize PostGIS data
+def visualize_postgis():
+    # Title for GIS visualization
+    st.write("## PostGIS-based GIS Data Visualization")
+
+    # Query data from the PostgreSQL database
+    gdf = query_data()
+
+    # Create an interactive map using folium
+    def create_map(gdf):
+        # Determine the map center
+        map_center = [gdf.geometry.y.mean(), gdf.geometry.x.mean()]
+        m = folium.Map(location=map_center, zoom_start=10)
+
+        # Add points to the map
+        for _, row in gdf.iterrows():
+            folium.Marker(
+                location=[row.geometry.y, row.geometry.x],
+                popup=row.get('name', 'No name')  # Display 'name' if available
+            ).add_to(m)
+
+        return m
+
+    # Display the map in Streamlit
+    folium_map = create_map(gdf)
+    st_folium(folium_map, width=700, height=500)
+
+# Visualize PostGIS data
+visualize_postgis()
+
+if __name__ == "__main__":
+    user_query = "A cozy place with great vegetarian food"
+    try:
+        results = match(user_query)
+        for result in results:
+            print(result)
+    except Exception as e:
+        print(e)
