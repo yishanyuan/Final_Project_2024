@@ -2,13 +2,14 @@
 ### Group Name: Pumpkin Pie
 
 # Goal of the project
-Are you tired of endless scrolling through reviews to find the perfect dining experience? Our Michelin Guide: Vector-Based Dining Finder is designed to revolutionize the way you discover restaurants. By leveraging vector embeddings and similarity search, our tool transforms random user queries, like "truffle pasta with outdoor seating," into precise recommendations. Our project focuses on creating a vector database of Michelin-starred restaurants and reviews, coupled with an interactive dashboard to streamline the restaurant discovery process.
+Are you tired of endless scrolling through reviews to find the fine dining experience? Our Michelin Guide: Vector-Based Dining Finder is designed to revolutionize the way you discover restaurants. By leveraging vector embeddings and similarity search, our tool transforms random user queries, like "truffle pasta with outdoor seating," into precise recommendations. Our project focuses on creating a vector database of Michelin-starred restaurants and reviews, coupled with an interactive dashboard to streamline the restaurant discovery process.
 
 # Source of dataset
-Michelin Offical Websites:https://guide.michelin.com/us/en
+Michelin Offical Websites: https://guide.michelin.com/us/en
 
 # Scrape Data
-Using the `python3 code/search.py`, `python3 code/extract.py`, and `python3 code/scrape.py` on the cmd to run the data.
+Using the `python3 code/scrape.py` on the cmd to run the data.
+
 
 ## Search For Michelin Listings and Save Links
 

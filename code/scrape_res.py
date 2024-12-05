@@ -21,6 +21,11 @@ def get_address(soup):
     res_address = soup.find_all("div", class_="data-sheet__block--text")[0].getText().strip()
     return res_address
 
+def get_country(soup):
+    res_country = soup.find_all("div", class_="data-sheet__block--text")[0].getText().strip(",")[-1]
+    return res_country
+
+
 def get_price(soup):
     res_price = soup.find_all("div", class_ = "data-sheet__block--text")[1].getText().split()[0].strip()
     return res_price
@@ -61,7 +66,10 @@ def get_facilities_services_info(soup):
 
 
 def get_res_lat_long(soup):
-    response = map_client.places(query = get_name(soup))
+    name = get_name(soup)
+    country = get_country(soup)
+    query_request = f"{name}, {country}"
+    response = map_client.places(query = query_request)
     results = response.get("results")
     if len(results) > 0:
         lat_long = results[0]["geometry"]["location"]

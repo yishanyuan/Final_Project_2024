@@ -4,7 +4,7 @@ URL = "https://guide.michelin.com/us/en/restaurants/all-starred/bib-gourmand/pag
 
 
 def scrape_page(num):
-    """Takes a page and returns a list of links to the book that are on the page."""
+    """Takes a page and returns a list of links to the restaurant that are on the page."""
     url = URL + str(num)
     res_links = get_soup(url).find_all("h3", class_ = "card__menu-content--title pl-text pl-big js-match-height-title")
     links = []
@@ -17,7 +17,7 @@ def scrape_page(num):
     return links
 
 def scrape_all_pages():
-    """Scrapes all pages, returning a list of book links."""
+    """Scrapes all pages, returning a list of reatsaurant links."""
     page = 1
 
     links = []
