@@ -68,7 +68,7 @@ def get_res_lat_long(soup):
     else:
         lat_long = "N/A"
     return lat_long
-
+print(get_res_lat_long(get_soup(https://guide.michelin.com/us/en/macau-region/macau/restaurant/the-eight)))
 """
 def get_res_information(soup):
     response = map_client.places(query = get_name(soup))
