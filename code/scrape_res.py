@@ -21,6 +21,11 @@ def get_address(soup):
     res_address = soup.find_all("div", class_="data-sheet__block--text")[0].getText().strip()
     return res_address
 
+def get_country(soup):
+    res_country = soup.find_all("div", class_="data-sheet__block--text")[0].getText().strip(",")[-1]
+    return res_country
+
+
 def get_price(soup):
     res_price = soup.find_all("div", class_ = "data-sheet__block--text")[1].getText().split()[0].strip()
     return res_price
@@ -61,7 +66,10 @@ def get_facilities_services_info(soup):
 
 
 def get_res_lat_long(soup):
-    response = map_client.places(query = get_name(soup))
+    name = get_name(soup)
+    country = get_country(soup)
+    query_request = f"{name}, {country}"
+    response = map_client.places(query = query_request)
     results = response.get("results")
     if len(results) > 0:
         lat_long = results[0]["geometry"]["location"]
@@ -69,26 +77,6 @@ def get_res_lat_long(soup):
         lat_long = "N/A"
     return lat_long
 
-"""
-def get_res_information(soup):
-    response = map_client.places(query = get_name(soup))
-    results = response.get("results")
-    if len(results) > 0:
-        rating = results[0]["rating"]
-        lat_long = results[0]["geometry"]["location"]
-        num_user_reviews = results[0]["user_ratings_total"]
-    else:
-        rating = "N/A"
-        lat_long = "N/A"
-        num_user_reviews = "N/A"
-    dict_info = {
-        "rating": rating,
-        "latitude and longitude": lat_long,
-        "numbers of reviews": num_user_reviews
-    }
-
-    return dict_info
-"""
 
 
 
