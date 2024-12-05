@@ -37,7 +37,7 @@ def match(user_query):
         SELECT DISTINCT r.uniqueid, r.name, r.address, r.country, r.stars_label, r.iso_code,
                1 - (r.embedding <=> :user_embedding_string) AS similarity
         FROM cleaned_data_with_embeddings r
-        WHERE 1 - (r.embedding <=> :user_embedding_string) > 0.5
+        WHERE (1 - (r.embedding <=> :user_embedding_string)) > 0.5
         ORDER BY similarity DESC
         LIMIT 20
     """
