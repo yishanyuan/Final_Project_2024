@@ -7,7 +7,7 @@ from scrape_res import scrape_res
 
 
 def scrape():
-    """Scrape everything and return a list of books."""
+    """Scrape everything and return a list of restaurants."""
     res_urls = scrape_all_pages()
     res = scrape_res(res_urls)
     return res
