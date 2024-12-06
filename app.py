@@ -1,8 +1,29 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from code.gis_utils import query_data
+from code.match_sql import RestaurantMatcher  # Import the RestaurantMatcher class
+from dotenv import load_dotenv
+import os
+from sqlalchemy import create_engine, text
 
-# Set Streamlit page configuration for wide layout
+# Database connection settings
+DATABASE_USERNAME = "postgres"
+DATABASE_PASSWORD = "pumpkinpie"
+DATABASE_HOST = "34.57.167.81"
+DATABASE_PORT = "5432"
+DATABASE_DATABASE = "finalproject2024"
+DATABASE_URL = f"postgresql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_DATABASE}"
+
+# Create the SQLAlchemy engine
+engine = create_engine(DATABASE_URL)
+
+# Helper function to run SQL queries
+def run_query(query, params=None):
+    with engine.connect() as conn:
+        return pd.read_sql_query(text(query), conn, params=params)
+
+# Set Streamlit page configuration for full-width layout
 st.set_page_config(layout="wide")
 
 # Load the data
@@ -13,14 +34,26 @@ def load_data():
 data = load_data()
 
 # Add a title and description
-st.markdown("<h1 style='text-align: left;'>Michelin Restaurant Finder 🌍</h1>", unsafe_allow_html=True)
-st.write("Click on a country to see the total number of Michelin restaurants and their breakdown by star ratings.")
+st.markdown("<h1 style='text-align: center;'>Michelin Restaurant Finder 🌍</h1>", unsafe_allow_html=True)
+st.write("Search Michelin restaurants using filters or an AI-powered query box.")
 
-# Aggregate data for the world map
-country_star_counts = data.groupby(["country", "stars_label"]).size().unstack(fill_value=0)
-country_counts = data.groupby("country").size().reset_index(name="Restaurant Count")
-country_iso = data[["country", "ISO Code"]].drop_duplicates()
-world_data = pd.merge(country_counts, country_iso, on="country", how="left")
+# Load the data for the map
+try:
+    print("Running map.py to fetch the latest Michelin data...")
+    subprocess.run(["python3", "map.py"], check=True)
+except Exception as e:
+    st.error(f"Error occurred while running map.py: {e}")
+    st.stop()
+
+csv_file = "michelin_statistics_by_country.csv"
+if not os.path.exists(csv_file):
+    st.error(f"Error: {csv_file} not found. Ensure map.py ran successfully.")
+    st.stop()
+
+data = pd.read_csv(csv_file)
+
+# Debug: Print unique country names
+print("Unique country names in dataset:", data["country"].unique())
 
 # Add hover text with details for each country
 hover_texts = []
@@ -83,36 +116,37 @@ cuisine_options = ["All"] + sorted(data["food type"].dropna().unique())
 selected_star = st.selectbox("Select Star Rating:", star_options)
 selected_country = st.selectbox("Select Country:", country_options)
 selected_cuisine = st.selectbox("Select Cuisine Type:", cuisine_options)
+selected_price = st.slider("Select Price Range (0 = Cheapest, 4 = Most Expensive):", 0, 4, (0, 4))
 
-# Search box after filters
-st.write("### Search Restaurants by Keywords")
-search_query = st.text_input("Enter keywords to search in restaurant descriptions:", value="")
-
-# Filter data based on user selection
-filtered_data = data.copy()
+# Build SQL query based on filters
+query = """
+SELECT name AS "Restaurant Name", 
+       food_type AS "Cuisine", 
+       country AS "Country", 
+       stars_label AS "Star Rating",
+       CAST(price_symbol_count AS INTEGER) AS "Price Range",
+       description
+FROM cleaned_data_with_embeddings
+WHERE 1=1
+"""
+params = {}
 
 if selected_star != "All":
     filtered_data = filtered_data[filtered_data["stars_label"].astype(str) == selected_star]
 if selected_country != "All":
     filtered_data = filtered_data[filtered_data["country"] == selected_country]
 if selected_cuisine != "All":
-    filtered_data = filtered_data[filtered_data["food type"] == selected_cuisine]
+    query += " AND food_type = :food_type"
+    params["food_type"] = selected_cuisine
+query += " AND CAST(price_symbol_count AS INTEGER) BETWEEN :min_price AND :max_price"
+params["min_price"], params["max_price"] = selected_price
 
-# Apply search filter
-if search_query:
-    filtered_data = filtered_data[filtered_data["description"].str.contains(search_query, case=False, na=False)]
+# Run the filtered query
+filtered_data = run_query(query, params=params)
 
 # Prepare data for display
-filtered_data = filtered_data.rename(columns={
-    "name": "Restaurant Name",
-    "food type": "Cuisine",
-    "country": "Country",
-    "stars_label": "Star Rating"
-})
-columns_to_display = ["Restaurant Name", "Cuisine", "Country", "Star Rating"]
-
-# Reset index to ensure sequential numbering
-filtered_data = filtered_data[columns_to_display].reset_index(drop=True)
+filtered_data = filtered_data[["Restaurant Name", "Cuisine", "Country", "Star Rating", "Price Range"]]
+filtered_data.reset_index(drop=True, inplace=True)
 filtered_data.index += 1  # Start index from 1
 filtered_data.index.name = "No."
 
@@ -123,3 +157,31 @@ if filtered_data.empty:
 else:
     st.dataframe(filtered_data, use_container_width=True)
 
+# AI-Powered Restaurant Search
+st.write("### Combined AI and Keyword Search")
+matcher = RestaurantMatcher()  # Initialize the RestaurantMatcher
+ai_query = st.text_input("Enter a query to find restaurants (e.g., 'cozy Italian bistro with pasta' or keywords like 'Cantonese'):")
+
+if ai_query:
+    try:
+        st.write("Running AI-based search...")
+        ai_results = matcher.match(ai_query)  # Use the match method
+        ai_results_df = pd.DataFrame(ai_results)
+        ai_results_df = ai_results_df[
+            ["name", "address", "country", "stars_label", "iso_code", "similarity"]
+        ]
+        ai_results_df.rename(
+            columns={
+                "name": "Restaurant Name",
+                "address": "Address",
+                "country": "Country",
+                "stars_label": "Star Rating",
+                "iso_code": "ISO Code",
+                "similarity": "Similarity Score",
+            },
+            inplace=True,
+        )
+        st.write("### AI Search Results")
+        st.dataframe(ai_results_df, use_container_width=True)
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
