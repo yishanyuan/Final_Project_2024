@@ -4,16 +4,15 @@ import requests
 import os
 import sys
 import dotenv
-#dotenv.load_dotenv(".env")
-#GOOGLE_PLACE_API_KEY = os.environ["GOOGLE_PLACE_API_KEY"]
-#map_client = googlemaps.Client(GOOGLE_PLACE_API_KEY)
+dotenv.load_dotenv(".env")
+GOOGLE_PLACE_API_KEY = os.environ["GOOGLE_PLACE_API_KEY"]
+map_client = googlemaps.Client(GOOGLE_PLACE_API_KEY)
 
 def get_name(soup):
     """ Extracts the title from the BeautifulSoup instance representing a restaurant page as a string."""
     res_name = soup.find("div", class_ = "col col-12 col-lg-12")
     h1_tag = res_name.find("h1")
     title = h1_tag.getText()
-    print(title)
     
     return title
 
@@ -24,7 +23,7 @@ def get_address(soup):
 def get_country(soup):
     res_country = soup.find_all("div", class_="data-sheet__block--text")[0].getText().split(",")[-1].strip()
     return res_country
-#print(get_country(get_soup("https://guide.michelin.com/us/en/macau-region/macau/restaurant/the-eight")))
+
 
 
 def get_price(soup):
@@ -64,8 +63,7 @@ def get_facilities_services_info(soup):
         facil_serv_list.append(li_text)
     
     return facil_serv_list
-print(get_facilities_services_info(get_soup("https://guide.michelin.com/us/en/california/us-san-diego/restaurant/addison")))
-print(get_facilities_services_info(get_soup("https://guide.michelin.com/us/en/texas/houston_2986624/restaurant/nobie-s")))
+
 def get_res_lat_long(soup):
     name = get_name(soup)
     country = get_country(soup)
@@ -77,28 +75,6 @@ def get_res_lat_long(soup):
     else:
         lat_long = "N/A"
     return lat_long
-#print(get_res_lat_long(get_soup("https://guide.michelin.com/us/en/macau-region/macau/restaurant/the-eight")))
-"""
-def get_res_information(soup):
-    response = map_client.places(query = get_name(soup))
-    results = response.get("results")
-    if len(results) > 0:
-        rating = results[0]["rating"]
-        lat_long = results[0]["geometry"]["location"]
-        num_user_reviews = results[0]["user_ratings_total"]
-    else:
-        rating = "N/A"
-        lat_long = "N/A"
-        num_user_reviews = "N/A"
-    dict_info = {
-        "rating": rating,
-        "latitude and longitude": lat_long,
-        "numbers of reviews": num_user_reviews
-    }
-
-    return dict_info
-"""
-
 
 
 def scrape_res_dict(res_url):
@@ -115,11 +91,7 @@ def scrape_res_dict(res_url):
         "latitude and longitude": get_res_lat_long(soup),
         #"numbers of users' reviews": dict_info["numbers of reviews"]
         "food type": get_type_food(soup)
-
-
-
     }
-    
     return scraped_res_dict
 
 def scrape_res(res_urls):
