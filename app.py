@@ -3,8 +3,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from code.gis_utils import query_data
-import folium
-from streamlit_folium import st_folium
+from code.match_sql import RestaurantMatcher  # Import the RestaurantMatcher class
 from dotenv import load_dotenv
 import os
 from sqlalchemy import create_engine, text
@@ -30,21 +29,20 @@ st.set_page_config(layout="wide")
 
 # Add a title and description
 st.markdown("<h1 style='text-align: center;'>Michelin Restaurant Finder 🌍</h1>", unsafe_allow_html=True)
-st.write("Click on a country to see the total number of Michelin restaurants and their breakdown by star ratings.")
+st.write("Search Michelin restaurants using filters or an AI-powered query box.")
 
-# Load the data from map.py
+# Load the data for the map
 try:
     print("Running map.py to fetch the latest Michelin data...")
     subprocess.run(["python3", "map.py"], check=True)
 except Exception as e:
-    print("Error occurred while running map.py:", e)
-    exit()
+    st.error(f"Error occurred while running map.py: {e}")
+    st.stop()
 
-# Load the generated data
 csv_file = "michelin_statistics_by_country.csv"
 if not os.path.exists(csv_file):
-    print(f"Error: {csv_file} not found. Ensure map.py ran successfully.")
-    exit()
+    st.error(f"Error: {csv_file} not found. Ensure map.py ran successfully.")
+    st.stop()
 
 data = pd.read_csv(csv_file)
 
@@ -126,10 +124,7 @@ star_options, country_options, cuisine_options = get_filter_options()
 selected_star = st.selectbox("Select Star Rating:", star_options)
 selected_country = st.selectbox("Select Country:", country_options)
 selected_cuisine = st.selectbox("Select Cuisine Type:", cuisine_options)
-
-# Search box for keyword search
-st.write("### Search Restaurants by Keywords")
-search_query = st.text_input("Enter keywords to search in restaurant descriptions:", value="")
+selected_price = st.slider("Select Price Range (0 = Cheapest, 4 = Most Expensive):", 0, 4, (0, 4))
 
 # Build SQL query based on filters
 query = """
@@ -137,6 +132,7 @@ SELECT name AS "Restaurant Name",
        food_type AS "Cuisine", 
        country AS "Country", 
        stars_label AS "Star Rating",
+       CAST(price_symbol_count AS INTEGER) AS "Price Range",
        description
 FROM cleaned_data_with_embeddings
 WHERE 1=1
@@ -152,15 +148,14 @@ if selected_country != "All":
 if selected_cuisine != "All":
     query += " AND food_type = :food_type"
     params["food_type"] = selected_cuisine
-if search_query:
-    query += " AND description ILIKE :search_query"
-    params["search_query"] = f"%{search_query}%"
+query += " AND CAST(price_symbol_count AS INTEGER) BETWEEN :min_price AND :max_price"
+params["min_price"], params["max_price"] = selected_price
 
 # Run the filtered query
 filtered_data = run_query(query, params=params)
 
 # Prepare data for display
-filtered_data = filtered_data[["Restaurant Name", "Cuisine", "Country", "Star Rating"]]
+filtered_data = filtered_data[["Restaurant Name", "Cuisine", "Country", "Star Rating", "Price Range"]]
 filtered_data.reset_index(drop=True, inplace=True)
 filtered_data.index += 1  # Start index from 1
 filtered_data.index.name = "No."
@@ -171,3 +166,32 @@ if filtered_data.empty:
     st.write("No restaurants match the selected filters.")
 else:
     st.dataframe(filtered_data, use_container_width=True)
+
+# AI-Powered Restaurant Search
+st.write("### Combined AI and Keyword Search")
+matcher = RestaurantMatcher()  # Initialize the RestaurantMatcher
+ai_query = st.text_input("Enter a query to find restaurants (e.g., 'cozy Italian bistro with pasta' or keywords like 'Cantonese'):")
+
+if ai_query:
+    try:
+        st.write("Running AI-based search...")
+        ai_results = matcher.match(ai_query)  # Use the match method
+        ai_results_df = pd.DataFrame(ai_results)
+        ai_results_df = ai_results_df[
+            ["name", "address", "country", "stars_label", "iso_code", "similarity"]
+        ]
+        ai_results_df.rename(
+            columns={
+                "name": "Restaurant Name",
+                "address": "Address",
+                "country": "Country",
+                "stars_label": "Star Rating",
+                "iso_code": "ISO Code",
+                "similarity": "Similarity Score",
+            },
+            inplace=True,
+        )
+        st.write("### AI Search Results")
+        st.dataframe(ai_results_df, use_container_width=True)
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
