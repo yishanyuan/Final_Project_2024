@@ -4,9 +4,9 @@ import requests
 import os
 import sys
 import dotenv
-dotenv.load_dotenv(".env")
-GOOGLE_PLACE_API_KEY = os.environ["GOOGLE_PLACE_API_KEY"]
-map_client = googlemaps.Client(GOOGLE_PLACE_API_KEY)
+#dotenv.load_dotenv(".env")
+#GOOGLE_PLACE_API_KEY = os.environ["GOOGLE_PLACE_API_KEY"]
+#map_client = googlemaps.Client(GOOGLE_PLACE_API_KEY)
 
 def get_name(soup):
     """ Extracts the title from the BeautifulSoup instance representing a restaurant page as a string."""
@@ -56,7 +56,7 @@ def get_description(soup):
 
 
 def get_facilities_services_info(soup):
-    res_facil_serv_info = soup.find_all("section", class_ = "section section-main")[0]
+    res_facil_serv_info = soup.find_all("div", class_ = "modal modal__common fade")[0]
     facil_serv_info = res_facil_serv_info.find_all("li")
     facil_serv_list = []
     for i in range(len(facil_serv_info)):
@@ -64,8 +64,8 @@ def get_facilities_services_info(soup):
         facil_serv_list.append(li_text)
     
     return facil_serv_list
-
-
+print(get_facilities_services_info(get_soup("https://guide.michelin.com/us/en/california/us-san-diego/restaurant/addison")))
+print(get_facilities_services_info(get_soup("https://guide.michelin.com/us/en/texas/houston_2986624/restaurant/nobie-s")))
 def get_res_lat_long(soup):
     name = get_name(soup)
     country = get_country(soup)
