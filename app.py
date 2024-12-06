@@ -1,59 +1,84 @@
+import subprocess
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from code.match_sql import match
-from  code.gis_utils import query_data  # Import the GIS data querying function
+from code.gis_utils import query_data
 import folium
 from streamlit_folium import st_folium
+from dotenv import load_dotenv
+import os
+from sqlalchemy import create_engine, text
 
-# Set Streamlit page configuration for wide layout
+# Database connection settings
+DATABASE_USERNAME = "postgres"
+DATABASE_PASSWORD = "pumpkinpie"
+DATABASE_HOST = "34.57.167.81"
+DATABASE_PORT = "5432"
+DATABASE_DATABASE = "finalproject2024"
+DATABASE_URL = f"postgresql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_DATABASE}"
+
+# Create the SQLAlchemy engine
+engine = create_engine(DATABASE_URL)
+
+# Helper function to run SQL queries
+def run_query(query, params=None):
+    with engine.connect() as conn:
+        return pd.read_sql_query(text(query), conn, params=params)
+
+# Set Streamlit page configuration for full-width layout
 st.set_page_config(layout="wide")
 
-# Load the data
-@st.cache_data
-def load_data():
-    return pd.read_csv("/Users/yuanyishan/Documents/Final_Project_2024/artifacts/cleaned_data_with_embeddings.csv")
-
-data = load_data()
-
 # Add a title and description
-st.markdown("<h1 style='text-align: left;'>Michelin Restaurant Finder 🌍</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>Michelin Restaurant Finder 🌍</h1>", unsafe_allow_html=True)
 st.write("Click on a country to see the total number of Michelin restaurants and their breakdown by star ratings.")
 
-# Aggregate data for the world map
-country_star_counts = data.groupby(["country", "stars_label"]).size().unstack(fill_value=0)
-country_counts = data.groupby("country").size().reset_index(name="Restaurant Count")
-country_iso = data[["country", "ISO Code"]].drop_duplicates()
-world_data = pd.merge(country_counts, country_iso, on="country", how="left")
+# Load the data from map.py
+try:
+    print("Running map.py to fetch the latest Michelin data...")
+    subprocess.run(["python3", "map.py"], check=True)
+except Exception as e:
+    print("Error occurred while running map.py:", e)
+    exit()
 
-# Add hover text with details for each country
+# Load the generated data
+csv_file = "michelin_statistics_by_country.csv"
+if not os.path.exists(csv_file):
+    print(f"Error: {csv_file} not found. Ensure map.py ran successfully.")
+    exit()
+
+data = pd.read_csv(csv_file)
+
+# Debug: Print unique country names
+print("Unique country names in dataset:", data["country"].unique())
+
+# Prepare data for the world map
 hover_texts = []
-for _, row in world_data.iterrows():
-    country = row["country"]
-    hover_text = f"<b>{country}</b><br>Total Restaurants: {row['Restaurant Count']}<br>"
-    if country in country_star_counts.index:
-        star_counts = country_star_counts.loc[country].to_dict()
-        for star, count in star_counts.items():
-            hover_text += f"{star} Stars: {count}<br>"
+for _, row in data.iterrows():
+    hover_text = f"<b>{row['country']}</b><br>Total Restaurants: {row['total_michelin']}<br>"
+    hover_text += f"0 Stars: {row['zero_star']}<br>"
+    hover_text += f"1 Star: {row['one_star']}<br>"
+    hover_text += f"2 Stars: {row['two_star']}<br>"
+    hover_text += f"3 Stars: {row['three_star']}<br>"
     hover_texts.append(hover_text)
 
-world_data["hover_text"] = hover_texts
+data["hover_text"] = hover_texts
 
-# Create a full-width world map using Plotly
+# Create the choropleth map
 fig = px.choropleth(
-    world_data,
-    locations="ISO Code",
-    color="Restaurant Count",
+    data,
+    locations="country",  # Use country names
+    locationmode="country names",  # Specify that we are using country names
+    color="total_michelin",
     hover_name="country",
     hover_data={
-        "Restaurant Count": True,
-        "ISO Code": False,
+        "total_michelin": True,
+        "country": False,
     },
     color_continuous_scale=px.colors.sequential.Plasma,
     title="Number of Michelin Restaurants by Country",
 )
 
-# layout for fullscreen map
+# Layout for fullscreen map
 fig.update_geos(
     showcoastlines=True,
     coastlinecolor="LightGrey",
@@ -69,10 +94,10 @@ fig.update_layout(
     ),
 )
 
-# Fix hover template to display the hover text
+# Update hover template to display custom hover text
 fig.update_traces(
     hovertemplate="%{customdata}<extra></extra>",
-    customdata=world_data["hover_text"],
+    customdata=data["hover_text"],
 )
 
 # Display the full-screen world map
@@ -80,88 +105,69 @@ st.plotly_chart(fig, use_container_width=True)
 
 # Dropdown filters
 st.write("### Filter Michelin Restaurants")
-star_options = ["All"] + sorted(data["stars_label"].astype(str).unique())
-country_options = ["All"] + sorted(data["country"].unique())
-cuisine_options = ["All"] + sorted(data["food type"].dropna().unique())
 
+# Fetch unique options for filters from the database
+@st.cache_data
+def get_filter_options():
+    query = """
+    SELECT DISTINCT stars_label, country, food_type
+    FROM cleaned_data_with_embeddings
+    """
+    data = run_query(query)
+    star_options = ["All"] + sorted(data["stars_label"].astype(str).unique())
+    country_options = ["All"] + sorted(data["country"].dropna().unique())
+    cuisine_options = ["All"] + sorted(data["food_type"].dropna().unique())
+    return star_options, country_options, cuisine_options
+
+# Get filter options
+star_options, country_options, cuisine_options = get_filter_options()
+
+# Add filter widgets
 selected_star = st.selectbox("Select Star Rating:", star_options)
 selected_country = st.selectbox("Select Country:", country_options)
 selected_cuisine = st.selectbox("Select Cuisine Type:", cuisine_options)
 
-# Search box after filters
+# Search box for keyword search
 st.write("### Search Restaurants by Keywords")
 search_query = st.text_input("Enter keywords to search in restaurant descriptions:", value="")
 
-# Filter data based on user selection
-filtered_data = data.copy()
+# Build SQL query based on filters
+query = """
+SELECT name AS "Restaurant Name", 
+       food_type AS "Cuisine", 
+       country AS "Country", 
+       stars_label AS "Star Rating",
+       description
+FROM cleaned_data_with_embeddings
+WHERE 1=1
+"""
+params = {}
 
 if selected_star != "All":
-    filtered_data = filtered_data[filtered_data["stars_label"].astype(str) == selected_star]
+    query += " AND stars_label = :stars_label"
+    params["stars_label"] = selected_star
 if selected_country != "All":
-    filtered_data = filtered_data[filtered_data["country"] == selected_country]
+    query += " AND country = :country"
+    params["country"] = selected_country
 if selected_cuisine != "All":
-    filtered_data = filtered_data[filtered_data["food type"] == selected_cuisine]
-
-# Apply search filter
+    query += " AND food_type = :food_type"
+    params["food_type"] = selected_cuisine
 if search_query:
-    filtered_data = filtered_data[filtered_data["description"].str.contains(search_query, case=False, na=False)]
+    query += " AND description ILIKE :search_query"
+    params["search_query"] = f"%{search_query}%"
+
+# Run the filtered query
+filtered_data = run_query(query, params=params)
 
 # Prepare data for display
-filtered_data = filtered_data.rename(columns={
-    "name": "Restaurant Name",
-    "food type": "Cuisine",
-    "country": "Country",
-    "stars_label": "Star Rating"
-})
-columns_to_display = ["Restaurant Name", "Cuisine", "Country", "Star Rating"]
-
-# Reset index to ensure sequential numbering
-filtered_data = filtered_data[columns_to_display].reset_index(drop=True)
+filtered_data = filtered_data[["Restaurant Name", "Cuisine", "Country", "Star Rating"]]
+filtered_data.reset_index(drop=True, inplace=True)
 filtered_data.index += 1  # Start index from 1
 filtered_data.index.name = "No."
 
-# Display the data with a wide format
+# Display the filtered data
 st.write("### Filtered Results")
 if filtered_data.empty:
     st.write("No restaurants match the selected filters.")
 else:
     st.dataframe(filtered_data, use_container_width=True)
-
-# Streamlit app to visualize PostGIS data
-def visualize_postgis():
-    # Title for GIS visualization
-    st.write("## PostGIS-based GIS Data Visualization")
-
-    # Query data from the PostgreSQL database
-    gdf = query_data()
-
-    # Create an interactive map using folium
-    def create_map(gdf):
-        # Determine the map center
-        map_center = [gdf.geometry.y.mean(), gdf.geometry.x.mean()]
-        m = folium.Map(location=map_center, zoom_start=10)
-
-        # Add points to the map
-        for _, row in gdf.iterrows():
-            folium.Marker(
-                location=[row.geometry.y, row.geometry.x],
-                popup=row.get('name', 'No name')  # Display 'name' if available
-            ).add_to(m)
-
-        return m
-
-    # Display the map in Streamlit
-    folium_map = create_map(gdf)
-    st_folium(folium_map, width=700, height=500)
-
-# Visualize PostGIS data
-visualize_postgis()
-
-if __name__ == "__main__":
-    user_query = "A cozy place with great vegetarian food"
-    try:
-        results = match(user_query)
-        for result in results:
-            print(result)
-    except Exception as e:
-        print(e)
