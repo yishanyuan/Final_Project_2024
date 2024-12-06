@@ -2,22 +2,28 @@ import subprocess
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from code.gis_utils import query_data
+from code.gis_utils import query_data, get_nearest_restaurants
 from code.match_sql import RestaurantMatcher  # Import the RestaurantMatcher class
 from dotenv import load_dotenv
+import folium
+from shapely.geometry import Point
+from streamlit_folium import st_folium
 import os
 from sqlalchemy import create_engine, text
 
-# Database connection settings
-DATABASE_USERNAME = "postgres"
-DATABASE_PASSWORD = "pumpkinpie"
-DATABASE_HOST = "34.57.167.81"
-DATABASE_PORT = "5432"
-DATABASE_DATABASE = "finalproject2024"
-DATABASE_URL = f"postgresql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_DATABASE}"
+# 加载环境变量
+load_dotenv()
+
+DATABASE_USERNAME = os.environ["DATABASE_USERNAME"]
+DATABASE_PASSWORD = os.environ["DATABASE_PASSWORD"]
+DATABASE_HOST = os.environ["DATABASE_HOST"]
+DATABASE_PORT = os.environ["DATABASE_PORT"]
+DATABASE_DATABASE = os.environ["DATABASE_DATABASE"]
+
+SQLALCHEMY_DATABASE_URL = f"postgresql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_DATABASE}"
 
 # Create the SQLAlchemy engine
-engine = create_engine(DATABASE_URL)
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
 # Helper function to run SQL queries
 def run_query(query, params=None):
@@ -195,3 +201,38 @@ if ai_query:
         st.dataframe(ai_results_df, use_container_width=True)
     except Exception as e:
         st.error(f"An error occurred: {e}")
+
+
+
+
+# --- Section 3: GIS交互式地图 ---
+def interactive_map():
+    st.write("### Interactive Map with Nearest Restaurants")
+
+    # 查询 PostGIS 数据
+    gdf = query_data()
+
+    # 创建地图
+    map_center = [gdf.geometry.y.mean(), gdf.geometry.x.mean()]
+    m = folium.Map(location=map_center, zoom_start=12)
+
+    # 添加餐厅标记
+    for _, row in gdf.iterrows():
+        folium.Marker(
+            location=[row.geometry.y, row.geometry.x],
+            popup=f"{row['name']} ({row['stars_label']} stars)<br>{row['food_type']}<br>{row['address']}",
+        ).add_to(m)
+
+    # 显示地图
+    map_data = st_folium(m, width=800, height=600)
+
+    # 寻找最近的餐厅
+    if map_data["last_clicked"] is not None:
+        clicked_point = Point(map_data["last_clicked"]["lng"], map_data["last_clicked"]["lat"])
+        nearest_restaurants = get_nearest_restaurants(clicked_point, gdf)
+
+        st.write("### Nearest Restaurants")
+        st.table(
+            nearest_restaurants[['stars_label', 'name', 'food_type', 'address']].sort_values(by='stars_label', ascending=False)
+        )
+interactive_map()
