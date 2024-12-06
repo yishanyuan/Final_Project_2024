@@ -22,8 +22,9 @@ def get_address(soup):
     return res_address
 
 def get_country(soup):
-    res_country = soup.find_all("div", class_="data-sheet__block--text")[0].getText().strip(",")[-1]
+    res_country = soup.find_all("div", class_="data-sheet__block--text")[0].getText().split(",")[-1].strip()
     return res_country
+#print(get_country(get_soup("https://guide.michelin.com/us/en/macau-region/macau/restaurant/the-eight")))
 
 
 def get_price(soup):
@@ -76,7 +77,7 @@ def get_res_lat_long(soup):
     else:
         lat_long = "N/A"
     return lat_long
-print(get_res_lat_long(get_soup(https://guide.michelin.com/us/en/macau-region/macau/restaurant/the-eight)))
+#print(get_res_lat_long(get_soup("https://guide.michelin.com/us/en/macau-region/macau/restaurant/the-eight")))
 """
 def get_res_information(soup):
     response = map_client.places(query = get_name(soup))
