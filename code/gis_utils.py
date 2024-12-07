@@ -1,37 +1,18 @@
-import os
 import pandas as pd
 import geopandas as gpd
-from sqlalchemy import create_engine
 import ast
-from dotenv import load_dotenv
-from shapely.geometry import Point
-
-
-# 加载环境变量
-load_dotenv()
-
-DATABASE_USERNAME = os.environ["DATABASE_USERNAME"]
-DATABASE_PASSWORD = os.environ["DATABASE_PASSWORD"]
-DATABASE_HOST = os.environ["DATABASE_HOST"]
-DATABASE_PORT = os.environ["DATABASE_PORT"]
-DATABASE_DATABASE = os.environ["DATABASE_DATABASE"]
-
-SQLALCHEMY_DATABASE_URL = f"postgresql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_DATABASE}"
-
-# 创建数据库连接
-def get_database_connection():
-    engine = create_engine(SQLALCHEMY_DATABASE_URL)
-    return engine
+from code.database import get_engine
 
 # 查询数据并返回 GeoDataFrame
 def query_data():
-    engine = get_database_connection()
     query = """
     SELECT name, food_type, address, stars_label, latitude_and_longitude
     FROM cleaned_data_with_embeddings
     WHERE latitude_and_longitude IS NOT NULL;
     """
-    df = pd.read_sql(query, engine)
+    engine = get_engine()
+    with engine.connect() as connection:
+        df = pd.read_sql(query, connection)
 
     # 提取经纬度
     def extract_lat_lng(value):
