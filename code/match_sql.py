@@ -1,31 +1,13 @@
-import os
 import pandas as pd
-from sqlalchemy import create_engine, text
-from dotenv import load_dotenv
+from sqlalchemy import text
 from sentence_transformers import SentenceTransformer
+from code.database import get_engine
 
 class RestaurantMatcher:
     def __init__(self):
-        load_dotenv()
         
-        self.DATABASE_USERNAME = os.getenv("DATABASE_USERNAME", "postgres")
-        self.DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD", "pumpkinpie")
-        self.DATABASE_HOST = os.getenv("DATABASE_HOST", "34.57.167.81")
-        self.DATABASE_PORT = os.getenv("DATABASE_PORT", "5432")
-        self.DATABASE_DATABASE = os.getenv("DATABASE_DATABASE", "finalproject2024")
-
-        self.DATABASE_URL = f"postgresql://{self.DATABASE_USERNAME}:{self.DATABASE_PASSWORD}@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_DATABASE}"
-        self.engine = create_engine(self.DATABASE_URL)
-
-        self._initialize_database()
+        self.engine = get_engine()
         self.model = SentenceTransformer("all-MiniLM-L6-v2")
-
-    def _initialize_database(self):
-        """
-        Initializes the database by creating necessary extensions if they do not exist.
-        """
-        with self.engine.connect() as conn:
-            conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
 
     def match(self, user_query):
         """

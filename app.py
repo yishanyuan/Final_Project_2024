@@ -4,27 +4,14 @@ import pandas as pd
 import plotly.express as px
 from code.gis_utils import query_data, get_nearest_restaurants
 from code.match_sql import RestaurantMatcher  # Import the RestaurantMatcher class
-from dotenv import load_dotenv
 import folium
 from shapely.geometry import Point
 from streamlit_folium import st_folium
 import os
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
+from code.database import get_engine
 
-# 加载环境变量
-load_dotenv()
-
-DATABASE_USERNAME = os.environ["DATABASE_USERNAME"]
-DATABASE_PASSWORD = os.environ["DATABASE_PASSWORD"]
-DATABASE_HOST = os.environ["DATABASE_HOST"]
-DATABASE_PORT = os.environ["DATABASE_PORT"]
-DATABASE_DATABASE = os.environ["DATABASE_DATABASE"]
-
-SQLALCHEMY_DATABASE_URL = f"postgresql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_DATABASE}"
-
-# Create the SQLAlchemy engine
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
+engine = get_engine()
 # Helper function to run SQL queries
 def run_query(query, params=None):
     with engine.connect() as conn:
