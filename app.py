@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from code.gis_utils import query_data, get_nearest_restaurants
-from code.match_sql import RestaurantMatcher  # Import the RestaurantMatcher class
+from code.match_sql import RestaurantMatcher  
 import folium
 from shapely.geometry import Point
 from streamlit_folium import st_folium
@@ -57,8 +57,8 @@ data["hover_text"] = hover_texts
 # Create the choropleth map
 fig = px.choropleth(
     data,
-    locations="country",  # Use country names
-    locationmode="country names",  # Specify that we are using country names
+    locations="country",  
+    locationmode="country names",  
     color="total_michelin",
     hover_name="country",
     hover_data={
@@ -94,7 +94,7 @@ fig.update_traces(
 # Display the full-screen world map
 st.plotly_chart(fig, use_container_width=True)
 
-# Dropdown filters
+
 st.write("### Filter Michelin Restaurants")
 
 # Fetch unique options for filters from the database
@@ -110,7 +110,7 @@ def get_filter_options():
     cuisine_options = ["All"] + sorted(data["food_type"].dropna().unique())
     return star_options, country_options, cuisine_options
 
-# Get filter options
+
 star_options, country_options, cuisine_options = get_filter_options()
 
 # Add filter widgets
@@ -150,7 +150,7 @@ filtered_data = run_query(query, params=params)
 # Prepare data for display
 filtered_data = filtered_data[["Restaurant Name", "Cuisine", "Country", "Star Rating", "Price Range"]]
 filtered_data.reset_index(drop=True, inplace=True)
-filtered_data.index += 1  # Start index from 1
+filtered_data.index += 1  
 filtered_data.index.name = "No."
 
 # Display the filtered data
@@ -162,13 +162,13 @@ else:
 
 # AI-Powered Restaurant Search
 st.write("### Combined AI and Keyword Search")
-matcher = RestaurantMatcher()  # Initialize the RestaurantMatcher
+matcher = RestaurantMatcher()
 ai_query = st.text_input("Enter a query to find restaurants (e.g., 'cozy Italian bistro with pasta' or keywords like 'Cantonese'):")
 
 if ai_query:
     try:
         st.write("Running AI-based search...")
-        ai_results = matcher.match(ai_query)  # Use the match method
+        ai_results = matcher.match(ai_query) 
         ai_results_df = pd.DataFrame(ai_results)
         ai_results_df = ai_results_df[
             ["name", "address", "country", "stars_label", "iso_code", "similarity"]

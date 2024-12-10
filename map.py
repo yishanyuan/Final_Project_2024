@@ -23,9 +23,7 @@ def create_map():
         total_michelin DESC;
     """
     
-    
     engine = get_engine()
-
     try:
         with engine.connect() as connection:
             data = pd.read_sql(query, connection)
@@ -33,8 +31,6 @@ def create_map():
         output_file = "michelin_statistics_by_country.csv"
         data.to_csv(output_file, index=False)
         print(f"Data saved to {output_file}")
-
-      
         return data
 
     except Exception as e:
