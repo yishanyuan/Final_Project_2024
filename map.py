@@ -3,9 +3,9 @@ from code.database import get_engine
 
 def create_map():
     """
-    从数据库中查询餐厅统计数据，并保存为 CSV 文件。
+    Query statistical data from the database and save it as a CSV file.
     """
-    # SQL 查询：统计每个国家的米其林餐厅信息
+
     query = """
     SELECT 
         c.iso_code,
@@ -23,30 +23,21 @@ def create_map():
         total_michelin DESC;
     """
     
-    # 获取数据库引擎
+    
     engine = get_engine()
 
     try:
-        # 从数据库查询数据
         with engine.connect() as connection:
             data = pd.read_sql(query, connection)
 
-        # 可选：标准化国家名称（如果需要）
-        data["country"] = data["country"].replace({
-            "United States of America": "United States",
-            "Russia": "Russian Federation",
-            # 如果需要，可添加其他映射
-        })
-
-        # 保存结果到 CSV 文件
         output_file = "michelin_statistics_by_country.csv"
         data.to_csv(output_file, index=False)
-        print(f"数据已保存到 {output_file}")
+        print(f"Data saved to {output_file}")
 
-        # 返回 DataFrame 以便进一步处理
+      
         return data
 
     except Exception as e:
-        print("查询或保存数据时出错:", e)
+        print(f"Error occurred: {e}")
         return None
 
