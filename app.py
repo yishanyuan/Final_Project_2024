@@ -22,7 +22,7 @@ st.set_page_config(layout="wide")
 
 # Add a title and description
 st.markdown("<h1 style='text-align: center;'>Michelin Restaurant Finder 🌍</h1>", unsafe_allow_html=True)
-st.write("Search Michelin restaurants using filters or an AI-powered query box.")
+st.write("The Michelin Restaurant Finder is an interactive, data-driven platform designed to explore Michelin-starred restaurants worldwide. It provides users with a comprehensive and visually engaging way to search and analyze restaurants based on country, star rating, cuisine type, and price range. By combining traditional filtering with AI-powered keyword-based recommendations, the website offers a seamless experience for culinary enthusiasts.")
 
 # Load the data for the map
 try:
@@ -39,7 +39,6 @@ if not os.path.exists(csv_file):
 
 data = pd.read_csv(csv_file)
 
-# Debug: Print unique country names
 print("Unique country names in dataset:", data["country"].unique())
 
 # Prepare data for the world map
@@ -163,7 +162,7 @@ else:
 # AI-Powered Restaurant Search
 st.write("### Combined AI and Keyword Search")
 matcher = RestaurantMatcher()
-ai_query = st.text_input("Enter a query to find restaurants (e.g., 'cozy Italian bistro with pasta' or keywords like 'Cantonese'):")
+ai_query = st.text_input("Enter a query to find restaurants (e.g., 'cozy Italian bistro with pasta'):")
 
 if ai_query:
     try:
