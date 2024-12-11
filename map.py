@@ -26,8 +26,11 @@ def create_map():
     engine = get_engine()
     try:
         with engine.connect() as connection:
+            # Fetch the data from the database
             data = pd.read_sql(query, connection)
+            print(data.head())  # Print the first few rows to confirm data is being fetched
 
+        # Save the data to a CSV file
         output_file = "michelin_statistics_by_country.csv"
         data.to_csv(output_file, index=False)
         print(f"Data saved to {output_file}")
@@ -36,4 +39,3 @@ def create_map():
     except Exception as e:
         print(f"Error occurred: {e}")
         return None
-

@@ -13,9 +13,45 @@ from code.database import get_engine
 
 engine = get_engine()
 # Helper function to run SQL queries
-def run_query(query, params=None):
-    with engine.connect() as conn:
-        return pd.read_sql_query(text(query), conn, params=params)
+def create_map():
+    """
+    Query statistical data from the database and save it as a CSV file.
+    """
+
+    query = """
+    SELECT 
+        c.iso_code,
+        c.country,
+        COUNT(*) AS total_michelin,
+        SUM(CASE WHEN CAST(c.stars_label AS INTEGER) = 0 THEN 1 ELSE 0 END) AS zero_star,
+        SUM(CASE WHEN CAST(c.stars_label AS INTEGER) = 1 THEN 1 ELSE 0 END) AS one_star,
+        SUM(CASE WHEN CAST(c.stars_label AS INTEGER) = 2 THEN 1 ELSE 0 END) AS two_star,
+        SUM(CASE WHEN CAST(c.stars_label AS INTEGER) = 3 THEN 1 ELSE 0 END) AS three_star
+    FROM 
+        cleaned_data_with_embeddings c
+    GROUP BY 
+        c.iso_code, c.country
+    ORDER BY 
+        total_michelin DESC;
+    """
+    
+    engine = get_engine()
+    try:
+        with engine.connect() as connection:
+            # Fetch the data from the database
+            data = pd.read_sql(query, connection)
+            print(data.head())  # Print the first few rows to confirm data is being fetched
+
+        # Save the data to a CSV file
+        output_file = "michelin_statistics_by_country.csv"
+        data.to_csv(output_file, index=False)
+        print(f"Data saved to {output_file}")
+        return data
+
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return None
+
 
 # Set Streamlit page configuration for full-width layout
 st.set_page_config(layout="wide")
@@ -26,15 +62,17 @@ st.write("The Michelin Restaurant Finder is an interactive, data-driven platform
 
 # Load the data for the map
 try:
-    print("Running map.py to fetch the latest Michelin data...")
-    subprocess.run(["python3", "map.py"], check=True)
+    print("Fetching the latest Michelin data...")
+    data = create_map()
+    if data is None:
+        raise Exception("Data fetching failed. Ensure the database is reachable.")
 except Exception as e:
-    st.error(f"Error occurred while running map.py: {e}")
+    st.error(f"Error occurred while fetching Michelin data: {e}")
     st.stop()
 
 csv_file = "michelin_statistics_by_country.csv"
 if not os.path.exists(csv_file):
-    st.error(f"Error: {csv_file} not found. Ensure map.py ran successfully.")
+    st.error(f"Error: {csv_file} not found after data fetching. Ensure database is accessible.")
     st.stop()
 
 data = pd.read_csv(csv_file)
@@ -92,6 +130,11 @@ fig.update_traces(
 
 # Display the full-screen world map
 st.plotly_chart(fig, use_container_width=True)
+
+def run_query(query, params=None):
+    engine = get_engine()
+    with engine.connect() as conn:
+        return pd.read_sql_query(text(query), conn, params=params)
 
 
 st.write("### Filter Michelin Restaurants")
