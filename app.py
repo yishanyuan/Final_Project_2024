@@ -191,28 +191,22 @@ if ai_query:
 
 
 
-# --- Section 3: GIS交互式地图 ---
 def interactive_map():
     st.write("### Interactive Map with Nearest Restaurants")
 
-    # 查询 PostGIS 数据
     gdf = query_data()
 
-    # 创建地图
     map_center = [gdf.geometry.y.mean(), gdf.geometry.x.mean()]
     m = folium.Map(location=map_center, zoom_start=12)
 
-    # 添加餐厅标记
     for _, row in gdf.iterrows():
         folium.Marker(
             location=[row.geometry.y, row.geometry.x],
             popup=f"{row['name']} ({row['stars_label']} stars)<br>{row['food_type']}<br>{row['address']}",
         ).add_to(m)
 
-    # 显示地图
     map_data = st_folium(m, width=800, height=600)
 
-    # 寻找最近的餐厅
     if map_data["last_clicked"] is not None:
         clicked_point = Point(map_data["last_clicked"]["lng"], map_data["last_clicked"]["lat"])
         nearest_restaurants = get_nearest_restaurants(clicked_point, gdf)
