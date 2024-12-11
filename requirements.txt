@@ -3,7 +3,11 @@ tqdm==4.66.1
 sqlalchemy==1.4.50
 sentence-transformers==2.2.2
 streamlit==1.29.0
-psycopg2-binary==2.9.3
 black==23.9.1
-python-dotenv==0.20.0
 plotly==5.17.0
+folium==0.18.0
+shapely==2.0.1
+geopandas==0.14.0
+streamlit-folium==0.12.1
+psycopg2-binary==2.9.7
+python-dotenv==1.0.0
