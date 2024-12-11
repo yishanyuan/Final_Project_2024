@@ -36,87 +36,69 @@ The program begins by launching a headless browser using the `Selenium` WebDrive
 
 
 # Clean Data
+
 Using the `python3 code/cleaned_data.py` on the cmd to run the data.
 
-## Extract Check-in and Check-out Dates from URLs
-Using regular expressions to extract the check_in and check_out dates from each listing's URL and adds these dates to the listing details.
-
-**Regular Expression Pattern:** The pattern `r'check_in=(\d{4}-\d{2}-\d{2})&check_out=(\d{4}-\d{2}-\d{2})'` matches URLs containing dates such as check_in=2024-11-01&check_out=2024-11-05.
-If a match is found, the two dates (check_in and check_out) are captured.
-
-**Processing Logic:** Iterate through all the listings, checking each URL for a match.
-If the dates are found, add them to the corresponding listing details.
-Store the updated listings in a new dictionary for further processing.
-
-
-## Assign Cities Based on Check-out Dates
-Assigning cities to each listing based on specific check-out dates. When certain dates are encountered, the city is switched to the next one in the predefined list.
-
-**Key dates:** When the check_out date is `"2024-11-30"`, it signals the start of a new batch.
-If `"2024-11-02"` is encountered after this batch starts, the city assignment will rotate to the next city.
-
-**City List:** The predefined city list is: `["Austin, TX", "New York City, NY", "Chicago, IL", "Los Angeles, CA"].`
-The logic rotates through the list using city indexes, updating the assigned city whenever the key dates trigger a rotation.
-
-**Processing Logic:** Initialize the city index to 0 (pointing to the first city, Austin, TX).
-Iterate through the listings:
-If the check_out date is `"2024-11-30"`, mark it as a new batch.
-If `"2024-11-02"` is found within the new batch, advance the city index to the next city.
-Assign the city corresponding to the current index to each listing.
-
-
-## Remove Invalid Records
-The valid data is retained by applying several filtering conditions:
-
-**Filtering Conditions:** The URL must start with `https`. Otherwise, the listing is removed.
-features, prices, and house_rules must all contain valid data. If any of these fields are empty, the listing is discarded.
-
-**Processing Logic:** Iterate through the listings, checking if each URL starts with https.
-Use the `len()` function to ensure that features, prices, and house_rules are not empty.
-If a listing meets all the criteria, it is added to the cleaned data dictionary.
-
-## Load and Save JSON Data
-The program includes functions to load data from a JSON file and save the processed data into a new JSON file.
-
-
-# Manipulate Data
-Using the `python3 code/Change_file_format.py`, `python3 code/manipulated_variables.py`, `python3 code/sort_into_different_time_files.py` and `python3 code/split_data.py` on the cmd to run the data.
-
-## JSON to CSV Conversion ##
-
 **Key Functions:**<br>
 
-`load_json_data`: Load the JSON data from a specified file path.<br>
-`write_csv_header`: Write the header to the output CSV file.<br>
-`write_csv_rows`: Write rows of room data extracted from the JSON file into the CSV.<br>
-get_row_details: Extract specific room details (city, check-in/check-out, features, and pricing information) for each property from the JSON data.<br>
-`generate_csv`: Create a CSV file with the extracted room data including URL, features, and pricing details.<br>
-`close_json_file`: Close the JSON file after reading all the data.<br>
-
-**Processing Logic:**
-
-This script converts processed JSON files (e.g., cleaned_data.json) into CSV files. It reads data from a JSON file, extracts fields such as URL, city, check-in/check-out dates, features, and price details, and writes the data into CSV format. The generated CSV file is saved in the data folder. The workflow involves reading JSON data from cleaned_data.json, extracting fields like city, check-in/check-out dates, features, and prices, converting the data into CSV format, and saving the output CSV file (e.g., output_data.csv) to the data folder.
-
-## CSV Enhancement ##
-
-**Key Functions:**<br>
-
-`load_csv_data`: Load the input CSV file into a pandas DataFrame for further processing.<br>
-`define_base_directory`: Define the base directory for the project by moving up one level from the current file location.<br>
-`extract_and_add_feature_columns`: Add new feature columns (e.g., ‘Smoking allowed’, ‘Pets allowed’, ‘Free parking’) by checking if specific keywords are present in the ‘Features’ column.<br>
-`save_updated_csv`: Save the modified DataFrame (with additional feature columns) to a new CSV file.<br>
-`close_csv_file`: Close the original CSV file once the data is read and processed.<br>
-
+'load_jsonl_data': Load the input JSONL file containing raw restaurant data into a pandas DataFrame for processing.
+'clean_name_column': Remove non-alphanumeric characters from the restaurant names to ensure consistency.
+'extract_country_from_address': Parse the address column to extract the country information, assuming the last word in the address represents the country.
+'fix_encoding_issues': Correct improperly encoded text, such as "TÃ¼rkiye," by re-encoding it into the proper UTF-8 format.
+'add_stars_label': Generate a numeric column that maps Michelin star ratings to corresponding numeric labels (e.g., "Three Stars" → 3).
+'count_price_symbols': Calculate the number of special symbols in the price column to approximate price categories.
+'drop_unnecessary_columns': Remove redundant columns such as raw "price" and "stars" to streamline the dataset.
+'save_cleaned_data_to_csv': Save the cleaned DataFrame to a CSV file for subsequent SQL ingestion.
 
 **Description**
 
-This script updates an existing CSV file by adding new columns such as Smoking allowed, Pets allowed, and Free parking. It also adds a Length of lease column based on the check-out date, marking rows as one day, one week, or one month.
+The clean data process was a critical step in ensuring the accuracy and usability of our Michelin Guide Dining Finder. This stage involved transforming raw data into a structured, clean dataset that could be effectively used for analysis and recommendation generation.
 
-**Workflow**
+We began by loading a raw dataset in JSONL format and converted it into a tabular format using Python's pandas library. This transformation enabled us to systematically clean and preprocess key columns. For instance, the "name," "address," and "description" columns were stripped of non-alphanumeric characters to ensure consistency. To derive meaningful insights, we also extracted additional features such as "country," which was inferred from the last part of the address field, and "stars_label," which classified restaurants based on Michelin ratings (e.g., Three Stars, Two Stars).
 
-The workflow includes reading the input CSV file (e.g., path_to_your_existing_csv_file.csv) from the data folder, scanning the Features column to check for Smoking allowed, Pets allowed, and Free parking, adding corresponding columns to indicate whether these features are available, adding a Length of lease column based on specific check-out dates, and saving the updated CSV file to the data folder.
+During the process, we noticed inconsistencies in character encoding, particularly for certain country names such as "TÃ¼rkiye," which should be represented as "Türkiye." This issue was addressed by implementing a character encoding correction function that re-encoded problematic text into the proper UTF-8 format. Additionally, unmapped country names were manually corrected and aligned with their corresponding ISO standard names.
 
-## Data Processing and Price Adjustment ##
+To further enhance usability, we implemented a mapping system to link countries with their ISO codes. This was achieved by leveraging an external ISO country codes dataset. For countries that were not directly matched, we created a dictionary of manual mappings to ensure full coverage. The final dataset included a new column for ISO codes, providing a standardized reference for country information.
+
+Lastly, we added an identifier column to uniquely label each restaurant and dropped redundant fields, such as raw price and stars columns, to streamline the dataset. The final cleaned data was saved as a CSV file, ready to be utilized for vector embedding generation and cosine similarity analysis.
+
+This clean data process was instrumental in transforming raw, unstructured data into a robust foundation for the Michelin Guide Dining Finder, ensuring accurate and efficient performance of the recommendation system.
+
+## SQL Table and Extension ##
+
+Copy the codes in create_table.sql to DBeaver to run the sql codes. 
+
+**Key Functions:**<br>
+
+'upload_to_postgresql': Upload the cleaned CSV file to a PostgreSQL table for structured storage and querying.
+'create_vector_column': Add a new column to store vector embeddings generated by the Sentence Transformer model.
+'install_pgvector_extension': Install the pgvector extension in the PostgreSQL environment to enable native support for vector computations.
+'generate_embeddings': Encode restaurant reviews into 384-dimensional vector embeddings and store them in the database.
+'execute_cosine_similarity_search': Perform vector similarity queries using the cosine distance metric to identify the most relevant restaurants for user queries.
+'save_finalized_table': Save the updated SQL table with all modifications, including the vector embeddings and normalized schema.
+
+**Description**
+
+Following the data cleaning process, the refined dataset was uploaded to a PostgreSQL database to facilitate efficient storage and querying. This step was crucial for enabling advanced vector-based similarity searches in the Michelin Guide Dining Finder.
+
+The dataset was structured into a SQL table, ensuring proper normalization and alignment with relational database best practices. Each column of the table represented key attributes of the cleaned dataset, including the unique identifier, restaurant name, address, description, food type, stars label, ISO country code, and latitude and longitude information. This organization allowed for efficient querying and seamless integration with vector similarity operations.
+
+To enable vector-based computations, we installed the pgvector extension in PostgreSQL. This extension provides native support for storing and querying vector embeddings within the database. By leveraging pgvector, we could store dense vector embeddings directly in the database, enabling efficient similarity searches using cosine distance.
+
+The installation of the pgvector extension was straightforward, requiring the execution of the following command in the PostgreSQL environment:
+
+CREATE EXTENSION IF NOT EXISTS vector;
+
+Once the extension was installed, a new column was added to the SQL table to store the vector embeddings. These embeddings were generated using a pre-trained Sentence Transformer model and represented restaurant reviews in a 384-dimensional vector space. The database schema was updated to accommodate the new column, ensuring compatibility with the vector operations provided by pgvector.
+
+The use of PostgreSQL with the pgvector extension ensured that the Michelin Guide Dining Finder was equipped with a robust and scalable backend, capable of performing complex vector similarity searches efficiently. This setup formed the backbone of our recommendation system, allowing us to deliver personalized restaurant suggestions to users.
+
+The following Entity-Relationship (ER) diagram illustrates the schema design for the Michelin Guide Dining Finder database. It highlights the relationships between the key tables: cleaned_data_with_embeddings and iso_country_codes. The cleaned_data_with_embeddings table stores detailed information about restaurants, including their names, addresses, food types, and vector embeddings for review analysis. The iso_country_codes table provides a reference for standardized country codes, ensuring accurate mapping and consistency across the dataset. This structure enables seamless integration of data for efficient querying and vector-based similarity searches, forming the foundation of the recommendation system.
+
+![Entity-Relationship Diagram](./artifacts/er_diagram.png)
+
+
+## sentence-transformers ##
 
 **Key Functions:**<br>
 

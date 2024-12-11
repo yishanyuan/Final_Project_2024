@@ -15,7 +15,7 @@ os.makedirs(artifacts_folder, exist_ok=True)
 
 # Step 1: Load the JSONL file and generate clean_data.csv
 data = []
-with open(input_jsonl_path, 'r') as file:
+with open(input_jsonl_path, 'r', encoding='utf-8') as file:
     for line in file:
         data.append(json.loads(line))
 
@@ -59,7 +59,7 @@ df['stars_label'] = df['stars'].apply(extract_stars_label)
 def count_symbols(price):
     if isinstance(price, str):
         return len(re.findall(r'[^\w\s]', price))
-    return 0
+    return 
 
 df['price_symbol_count'] = df['price'].apply(count_symbols)
 
@@ -81,17 +81,26 @@ unmapped_countries = {
     "Kong": "Hong Kong",
     "Dhabi": "United Arab Emirates",
     "Dubai": "United Arab Emirates",
-    "Kingdom": "United Kingdom",
+    "Kingdom": "United Kingdom of Great Britain and Northern Ireland",
     "Korea": "Korea, Republic of",
     "Macau": "Macao",
     "Netherlands": "Netherlands, Kingdom of the",
-    "Repblic": "Czechia",
-    "Trkiye": "TÃ¼rkiye",
+    "Republic": "Czechia",
+    "Trkiye": "Türkiye",
     "USA": "United States of America",
     "Vietnam": "Viet Nam",
 }
 
-# Update the country column in df for unmapped countries
+# Fix character encoding issues before mapping the country
+def fix_encoding_issues(country):
+    if isinstance(country, str):
+        # Decode improperly encoded text
+        return country.encode('latin1').decode('utf-8')
+    return country
+
+# Apply the fix to the country column
+df['country'] = df['country'].apply(fix_encoding_issues)
+
 df['country'] = df['country'].replace(unmapped_countries)
 
 # Map the ISO Code using the updated country column
