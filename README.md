@@ -116,16 +116,16 @@ Using the `streamlit run app.py` on the cmd to run the app.
 The Michelin Restaurant Finder is an interactive platform designed to explore and analyze Michelin-starred restaurants worldwide. With data-driven filtering, keyword-powered search, and geospatial visualizations, this tool provides a seamless experience for users interested in discovering high-quality dining options. Users can interactively filter restaurants by country, cuisine type, price range, and star rating.
 
 ## World Map Visualization
-![image]https://github.com/yishanyuan/Final_Project_2024/blob/main/artifacts/World_map.png <br>
+![image](https://github.com/yishanyuan/Final_Project_2024/blob/main/artifacts/World_map.png) <br>
 Displays Michelin-starred restaurants worldwide.Interactive hover feature shows the number of restaurants by country, along with their star distributions (0-star to 3-star).
 
 ## Dynamic Filtering
-![image]https://github.com/yishanyuan/Final_Project_2024/blob/main/artifacts/Filtered_results.png <br>
+![image](https://github.com/yishanyuan/Final_Project_2024/blob/main/artifacts/Filtered_results.png) <br>
 Filter restaurants based on:
 Star Rating; Country; Cuisine Type; Price Range
 
 ## AI-Powered Keyword SearchAI 
-![image]https://github.com/yishanyuan/Final_Project_2024/blob/main/artifacts/AI_search.png <br>
+![image](https://github.com/yishanyuan/Final_Project_2024/blob/main/artifacts/AI_search.png) <br>
 Combines keyword-based searches with an AI recommendation system to find restaurants matching specific descriptions (e.g., "delicious seafood restaurant").
 
 
