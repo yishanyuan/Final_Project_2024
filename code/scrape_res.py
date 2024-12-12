@@ -13,7 +13,6 @@ def get_name(soup):
     res_name = soup.find("div", class_ = "col col-12 col-lg-12")
     h1_tag = res_name.find("h1")
     title = h1_tag.getText()
-    print(title)
     
     return title
 
@@ -22,8 +21,9 @@ def get_address(soup):
     return res_address
 
 def get_country(soup):
-    res_country = soup.find_all("div", class_="data-sheet__block--text")[0].getText().strip(",")[-1]
+    res_country = soup.find_all("div", class_="data-sheet__block--text")[0].getText().split(",")[-1].strip()
     return res_country
+
 
 
 def get_price(soup):
@@ -55,7 +55,7 @@ def get_description(soup):
 
 
 def get_facilities_services_info(soup):
-    res_facil_serv_info = soup.find_all("section", class_ = "section section-main")[0]
+    res_facil_serv_info = soup.find_all("div", class_ = "modal modal__common fade")[0]
     facil_serv_info = res_facil_serv_info.find_all("li")
     facil_serv_list = []
     for i in range(len(facil_serv_info)):
@@ -63,7 +63,6 @@ def get_facilities_services_info(soup):
         facil_serv_list.append(li_text)
     
     return facil_serv_list
-
 
 def get_res_lat_long(soup):
     name = get_name(soup)
@@ -76,8 +75,6 @@ def get_res_lat_long(soup):
     else:
         lat_long = "N/A"
     return lat_long
-
-
 
 
 def scrape_res_dict(res_url):
@@ -94,11 +91,7 @@ def scrape_res_dict(res_url):
         "latitude and longitude": get_res_lat_long(soup),
         #"numbers of users' reviews": dict_info["numbers of reviews"]
         "food type": get_type_food(soup)
-
-
-
     }
-    
     return scraped_res_dict
 
 def scrape_res(res_urls):

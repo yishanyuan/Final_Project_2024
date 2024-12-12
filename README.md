@@ -35,152 +35,184 @@ The HTML content of each page is parsed with `BeautifulSoup` to extract restaura
 
 
 # Clean Data
+
 Using the `python3 code/cleaned_data.py` on the cmd to run the data.
 
-## Extract Check-in and Check-out Dates from URLs
-Using regular expressions to extract the check_in and check_out dates from each listing's URL and adds these dates to the listing details.
-
-**Regular Expression Pattern:** The pattern `r'check_in=(\d{4}-\d{2}-\d{2})&check_out=(\d{4}-\d{2}-\d{2})'` matches URLs containing dates such as check_in=2024-11-01&check_out=2024-11-05.
-If a match is found, the two dates (check_in and check_out) are captured.
-
-**Processing Logic:** Iterate through all the listings, checking each URL for a match.
-If the dates are found, add them to the corresponding listing details.
-Store the updated listings in a new dictionary for further processing.
-
-
-## Assign Cities Based on Check-out Dates
-Assigning cities to each listing based on specific check-out dates. When certain dates are encountered, the city is switched to the next one in the predefined list.
-
-**Key dates:** When the check_out date is `"2024-11-30"`, it signals the start of a new batch.
-If `"2024-11-02"` is encountered after this batch starts, the city assignment will rotate to the next city.
-
-**City List:** The predefined city list is: `["Austin, TX", "New York City, NY", "Chicago, IL", "Los Angeles, CA"].`
-The logic rotates through the list using city indexes, updating the assigned city whenever the key dates trigger a rotation.
-
-**Processing Logic:** Initialize the city index to 0 (pointing to the first city, Austin, TX).
-Iterate through the listings:
-If the check_out date is `"2024-11-30"`, mark it as a new batch.
-If `"2024-11-02"` is found within the new batch, advance the city index to the next city.
-Assign the city corresponding to the current index to each listing.
-
-
-## Remove Invalid Records
-The valid data is retained by applying several filtering conditions:
-
-**Filtering Conditions:** The URL must start with `https`. Otherwise, the listing is removed.
-features, prices, and house_rules must all contain valid data. If any of these fields are empty, the listing is discarded.
-
-**Processing Logic:** Iterate through the listings, checking if each URL starts with https.
-Use the `len()` function to ensure that features, prices, and house_rules are not empty.
-If a listing meets all the criteria, it is added to the cleaned data dictionary.
-
-## Load and Save JSON Data
-The program includes functions to load data from a JSON file and save the processed data into a new JSON file.
-
-
-# Manipulate Data
-Using the `python3 code/Change_file_format.py`, `python3 code/manipulated_variables.py`, `python3 code/sort_into_different_time_files.py` and `python3 code/split_data.py` on the cmd to run the data.
-
-## JSON to CSV Conversion ##
-
 **Key Functions:**<br>
 
-`load_json_data`: Load the JSON data from a specified file path.<br>
-`write_csv_header`: Write the header to the output CSV file.<br>
-`write_csv_rows`: Write rows of room data extracted from the JSON file into the CSV.<br>
-get_row_details: Extract specific room details (city, check-in/check-out, features, and pricing information) for each property from the JSON data.<br>
-`generate_csv`: Create a CSV file with the extracted room data including URL, features, and pricing details.<br>
-`close_json_file`: Close the JSON file after reading all the data.<br>
-
-**Processing Logic:**
-
-This script converts processed JSON files (e.g., cleaned_data.json) into CSV files. It reads data from a JSON file, extracts fields such as URL, city, check-in/check-out dates, features, and price details, and writes the data into CSV format. The generated CSV file is saved in the data folder. The workflow involves reading JSON data from cleaned_data.json, extracting fields like city, check-in/check-out dates, features, and prices, converting the data into CSV format, and saving the output CSV file (e.g., output_data.csv) to the data folder.
-
-## CSV Enhancement ##
-
-**Key Functions:**<br>
-
-`load_csv_data`: Load the input CSV file into a pandas DataFrame for further processing.<br>
-`define_base_directory`: Define the base directory for the project by moving up one level from the current file location.<br>
-`extract_and_add_feature_columns`: Add new feature columns (e.g., ‘Smoking allowed’, ‘Pets allowed’, ‘Free parking’) by checking if specific keywords are present in the ‘Features’ column.<br>
-`save_updated_csv`: Save the modified DataFrame (with additional feature columns) to a new CSV file.<br>
-`close_csv_file`: Close the original CSV file once the data is read and processed.<br>
-
+`load_jsonl_data`: Load the input JSONL file containing raw restaurant data into a pandas DataFrame for processing.<br>
+`clean_name_column`: Remove non-alphanumeric characters from the restaurant names to ensure consistency.<br>
+`extract_country_from_address`: Parse the address column to extract the country information, assuming the last word in the address represents the country.<br>
+`fix_encoding_issues`: Correct improperly encoded text, such as "TÃ¼rkiye," by re-encoding it into the proper UTF-8 format.<br>
+`add_stars_label`: Generate a numeric column that maps Michelin star ratings to corresponding numeric labels (e.g., "Three Stars" → 3).<br>
+`count_price_symbols`: Calculate the number of special symbols in the price column to approximate price categories.<br>
+`drop_unnecessary_columns`: Remove redundant columns such as raw "price" and "stars" to streamline the dataset.<br>
+`save_cleaned_data_to_csv`: Save the cleaned DataFrame to a CSV file for subsequent SQL ingestion.<br>
 
 **Description**
 
-This script updates an existing CSV file by adding new columns such as Smoking allowed, Pets allowed, and Free parking. It also adds a Length of lease column based on the check-out date, marking rows as one day, one week, or one month.
+The clean data process was a critical step in ensuring the accuracy and usability of our Michelin Guide Dining Finder. This stage involved transforming raw data into a structured, clean dataset that could be effectively used for analysis and recommendation generation.
 
-**Workflow**
+We began by loading a raw dataset in JSONL format and converted it into a tabular format using Python's pandas library. This transformation enabled us to systematically clean and preprocess key columns. For instance, the "name," "address," and "description" columns were stripped of non-alphanumeric characters to ensure consistency. To derive meaningful insights, we also extracted additional features such as "country," which was inferred from the last part of the address field, and "stars_label," which classified restaurants based on Michelin ratings (e.g., Three Stars, Two Stars).
 
-The workflow includes reading the input CSV file (e.g., path_to_your_existing_csv_file.csv) from the data folder, scanning the Features column to check for Smoking allowed, Pets allowed, and Free parking, adding corresponding columns to indicate whether these features are available, adding a Length of lease column based on specific check-out dates, and saving the updated CSV file to the data folder.
+During the process, we noticed inconsistencies in character encoding, particularly for certain country names such as "TÃ¼rkiye," which should be represented as "Türkiye." This issue was addressed by implementing a character encoding correction function that re-encoded problematic text into the proper UTF-8 format. Additionally, unmapped country names were manually corrected and aligned with their corresponding ISO standard names.
 
-## Data Processing and Price Adjustment ##
+To further enhance usability, we implemented a mapping system to link countries with their ISO codes. This was achieved by leveraging an external ISO country codes dataset. For countries that were not directly matched, we created a dictionary of manual mappings to ensure full coverage. The final dataset included a new column for ISO codes, providing a standardized reference for country information.
+
+Lastly, we added an identifier column to uniquely label each restaurant and dropped redundant fields, such as raw price and stars columns, to streamline the dataset. The final cleaned data was saved as a CSV file, ready to be utilized for vector embedding generation and cosine similarity analysis.
+
+This clean data process was instrumental in transforming raw, unstructured data into a robust foundation for the Michelin Guide Dining Finder, ensuring accurate and efficient performance of the recommendation system.
+
+## SQL Table and Extension ##
+
+Copy the codes in create_table.sql to DBeaver to run the sql codes. 
 
 **Key Functions:**<br>
 
-`load_csv_data`: Load the input CSV file into a pandas DataFrame for processing.<br>
-`add_length_of_lease_column`: Add a new column ‘Length of lease’ and populate it based on the ‘Check Out’ date values.<br>
-`drop_unnecessary_columns`: Remove the ‘Cleaning Fee’ and ‘Airbnb Service Fee’ columns from the DataFrame.<br>
-`adjust_price_for_one_month`: Modify the ‘Price Per Night’ for rows with a ‘one month’ lease, dividing the price by 30 to reflect the per-night rate.<br>
-`save_to_excel`: Save the updated DataFrame to an Excel file.<br>
-`adjust_excel_column_widths`: Adjust the widths of specific columns (‘C’ and ‘D’) in the Excel sheet for better readability.<br>
-`save_excel_file`: Save the final Excel file after applying all modifications.<br>
-`filter_by_lease_length`: Filter the data based on the ‘Length of lease’ column, creating separate DataFrames for ‘one day’, ‘one week’, and ‘one month’ lease durations.<br>
+`upload_to_postgresql`: Upload the cleaned CSV file to a PostgreSQL table for structured storage and querying.<br>
+`create_vector_column`: Add a new column to store vector embeddings generated by the Sentence Transformer model.<br>
+`install_pgvector_extension`: Install the pgvector extension in the PostgreSQL environment to enable native support for vector computations.<br>
+`generate_embeddings`: Encode restaurant reviews into 384-dimensional vector embeddings and store them in the database.<br>
+`execute_cosine_similarity_search`: Perform vector similarity queries using the cosine distance metric to identify the most relevant restaurants for user queries.<br>
+`save_finalized_table`: Save the updated SQL table with all modifications, including the vector embeddings and normalized schema.<br>
 
 **Description**
 
-This script updates the Length of lease based on Check In and Check Out dates and adjusts prices for records with a length of lease as one week and one month. It also splits the data into three separate files based on the length of lease: one day, one week, and one month. The processed data is saved as Excel files.
+Following the data cleaning process, the refined dataset was uploaded to a PostgreSQL database to facilitate efficient storage and querying. This step was crucial for enabling advanced vector-based similarity searches in the Michelin Guide Dining Finder.
 
-**Workflow**
+The dataset was structured into a SQL table, ensuring proper normalization and alignment with relational database best practices. Each column of the table represented key attributes of the cleaned dataset, including the unique identifier, restaurant name, address, description, food type, stars label, ISO country code, and latitude and longitude information. This organization allowed for efficient querying and seamless integration with vector similarity operations.
 
-The workflow includes reading the input CSV file, updating the Length of lease based on Check In and Check Out dates, deleting unnecessary columns like Cleaning Fee and Airbnb Service Fee, splitting the data into three files based on the Length of lease, and saving the processed data as Excel files while adjusting the column widths for date columns.
+To enable vector-based computations, we installed the pgvector extension in PostgreSQL. This extension provides native support for storing and querying vector embeddings within the database. By leveraging pgvector, we could store dense vector embeddings directly in the database, enabling efficient similarity searches using cosine distance.
+
+The installation of the pgvector extension was straightforward, requiring the execution of the following command in the PostgreSQL environment:
+
+CREATE EXTENSION IF NOT EXISTS vector;
+
+Once the extension was installed, a new column was added to the SQL table to store the vector embeddings. These embeddings were generated using a pre-trained Sentence Transformer model and represented restaurant reviews in a 384-dimensional vector space. The database schema was updated to accommodate the new column, ensuring compatibility with the vector operations provided by pgvector.
+
+The use of PostgreSQL with the pgvector extension ensured that the Michelin Guide Dining Finder was equipped with a robust and scalable backend, capable of performing complex vector similarity searches efficiently. This setup formed the backbone of our recommendation system, allowing us to deliver personalized restaurant suggestions to users.
+
+The following Entity-Relationship (ER) diagram illustrates the schema design for the Michelin Guide Dining Finder database. It highlights the relationships between the key tables: cleaned_data_with_embeddings and iso_country_codes. The cleaned_data_with_embeddings table stores detailed information about restaurants, including their names, addresses, food types, and vector embeddings for review analysis. The iso_country_codes table provides a reference for standardized country codes, ensuring accurate mapping and consistency across the dataset. This structure enables seamless integration of data for efficient querying and vector-based similarity searches, forming the foundation of the recommendation system.
+
+![Entity-Relationship Diagram](./artifacts/er_diagram.png)
+
+
+
+# Sentence-Transformers and Pgvector
+
+## Embedding
+
+Using the `python3 code/embedding.py` on the cmd to run the data.
+
+### **Key Functions:**<br>
+`load_model`: Load the pre-trained `all-MiniLM-L6-v2` model to generate text embeddings.<br>
+
+`load_csv`: Load the `cleaned_data.csv` file from the artifacts directory and ensure the file exists.<br>
+
+`validate_column`: Check whether the specified description column exists in the DataFrame loaded from `cleaned_data.csv`.<br>
+
+`generate_embeddings`: Generate sentence embeddings for the description column in `cleaned_data.csv` using the `all-MiniLM-L6-v2` model and store them in a new column named `embedding`.<br>
+
+`save_csv`: Save the updated DataFrame, including the new embedding column, to the `cleaned_data_with_embeddings.csv` file in the artifacts directory.<br>
+
+`process_csv_with_embeddings`: Integrate all steps to load `cleaned_data.csv`, validate its structure, generate embeddings for the description column, and save the processed file as `cleaned_data_with_embeddings.csv` in the artifacts directory.<br>
+
+### **Description：**<br>
+This script is designed to process textual data from a CSV file and enhance it with sentence embeddings using a pre-trained model. It begins by loading the `all-MiniLM-L6-v2` model, which specializes in generating embeddings for text descriptions. <br>
+
+Next, it reads the `cleaned_data.csv` file from the `artifacts` directory, ensuring the file exists before proceeding. Once the file is loaded, the script validates that the necessary `description` column is present in the dataset, as this column contains the text data to be processed. For each entry in the `description` column, the script generates a sentence embedding using the loaded model and stores the results in a new column named `embedding`. <br>
+
+After processing all rows, the updated data is saved to a new file, `cleaned_data_with_embeddings.csv`, in the same `artifacts` directory. The entire process, from loading the file to saving the enhanced data, is streamlined through a single function, ensuring the workflow is both efficient and easy to manage.
+
+## Match SQL with pgvector
+
+Using the `python3 code/match_sql.py` on the cmd to run the matching logic.
+
+### **Key Functions:** <br>
+
+`__init__`: Initialize the `RestaurantMatcher` class by setting up a database connection with `SQLAlchemy` and loading the `all-MiniLM-L6-v2` model for text embeddings.<br>
+
+`match`: Generate an embedding for the user query and use `pgvector` in the database to find the top 20 restaurants with similar embeddings. The similarity is calculated using cosine distance, and results are filtered to include only restaurants with a similarity score above 0.5. This function queries the database table `cleaned_data_with_embeddings`.<br>
+
+`update_embeddings`: Calculate new embeddings for the descriptions in the CSV file `cleaned_data.csv` (stored in the artifacts directory) and update the `cleaned_data_with_embeddings` table in the database with the new embeddings.<br>
+
+`run_match_query`: Execute the match function with a user query, handle potential exceptions, and print the matching results.<br>
+
+### **Description：**<br>
+This script enables efficient restaurant matching based on textual similarity, using a combination of sentence embeddings and database queries. It begins by initializing the RestaurantMatcher class, which sets up the required `SQLAlchemy` engine and loads the `all-MiniLM-L6-v2` model for embedding generation.
+
+The core functionality is provided by the match method, which takes a user query as input, generates a sentence embedding, and queries a PostgreSQL database equipped with `pgvector`. This query returns the top 20 restaurants from the `cleaned_data_with_embeddings` table with the highest similarity scores, provided the similarity is above 0.5. The results include essential restaurant details like uniqueid, name, address, country, stars_label, and similarity.
+
+Additionally, the update_embeddings function allows updating the embeddings in the `cleaned_data_with_embeddings` table with new data from the CSV file `cleaned_data.csv`, ensuring the system stays current. For ease of use, the `run_match_query` function integrates the matching logic and prints the results, making it convenient to test or use interactively. The entire workflow is optimized for matching restaurants based on user input with high accuracy and relevance.
+
+
+
+
+
 
 # Visualization And Findings #
 
 ## Visualization ##
-Using the `python3 code/visualization.py`  on the cmd to run the data. <br>
-This part generates a variety of visualizations for analyzing Airbnb prices based on different factors such as city, free parking availability, pet allowance, and smoking policies. It uses Python libraries, including matplotlib, seaborn, and pandas, to create histograms, bar plots, and boxplots from data stored in Excel files .Each of these functions reads data from Excel files, processes it for the respective analysis (e.g., comparing cities, or analyzing policy effects), and generates visualizations, which are saved to a specified output location.
+Using the `streamlit run app.py` on the cmd to run the app.
 
-**Key Functions:**
+## Overview
+The Michelin Restaurant Finder is an interactive platform designed to explore and analyze Michelin-starred restaurants worldwide. With data-driven filtering, keyword-powered search, and geospatial visualizations, this tool provides a seamless experience for users interested in discovering high-quality dining options. Users can interactively filter restaurants by country, cuisine type, price range, and star rating.
 
-`plot_price_distribution`: Generates a histogram showing one-day Airbnb price distribution.<br>
-`plot_city_comparison_boxplot`: Creates a boxplot comparing one-day prices across selected cities.<br>
-`plot_pet_combined_price_distributions` Visualizes price distributions for one-day, one-week, and one-month stays based on pet allowance.<br>
-`plot_smoking_allowed_boxplots`: Plots boxplots to compare prices for smoking and non-smoking listings.<br>
-`plot_free_parking_barplots`: Compares average prices for listings with and without free parking for different lease durations.<br>
-'`output_path = "./artifacts/"`: This specifies that the generated visualizations (PNG files) will be saved in a folder named artifacts, which is also located in the current working directory.<br>
+## World Map Visualization
+![image](https://github.com/yishanyuan/Final_Project_2024/blob/main/artifacts/World_map.png) <br>
+Displays Michelin-starred restaurants worldwide.Interactive hover feature shows the number of restaurants by country, along with their star distributions (0-star to 3-star).
 
-##  Findings and Analysis ##
-**General Price Distribution**
+## Dynamic Filtering
+![image](https://github.com/yishanyuan/Final_Project_2024/blob/main/artifacts/Filtered_results.png) <br>
+Filter restaurants based on:
+Star Rating; Country; Cuisine Type; Price Range
 
-![](./artifacts/price_distribution.png)
-The histogram shows the price distribution of one-day Airbnb listings, with the x-axis representing the price per night and the y-axis showing the frequency of listings at each price point. The distribution is right-skewed, with most one-day Airbnb listings priced between $100–$150. Higher-priced listings above $200 are rare, indicating that the majority of listings are affordable, while luxury options are limited. The skew suggests that more affordable listings dominate the market, with only a few high-end accommodations available.
+## AI-Powered Keyword SearchAI 
+![image](https://github.com/yishanyuan/Final_Project_2024/blob/main/artifacts/AI_search.png) <br>
+Combines keyword-based searches with an AI recommendation system to find restaurants matching specific descriptions (e.g., "delicious seafood restaurant").
 
-**City Comparison**
 
-![](./artifacts/city_comparison.png)
-The boxplot compares one-day Airbnb prices across four cities: Austin, New York City, Chicago, and Los Angeles. Austin has the highest median price (~$200), while New York City has a broader range with many lower-priced options but also several high-end outliers. Chicago and Los Angeles show more consistent pricing with fewer extreme values. Overall, Austin's prices vary widely, New York City has significant variation, and both Chicago and Los Angeles have more stable pricing with less variation in outliers.
 
-**The effect of free parking**
 
-![Free Parking Effect](./artifacts/combined_barplot_free_parking_price_output.png)
-For one-month stays, prices are similar regardless of free parking. For one-day stays, listings with free parking are cheaper. Free parking shows minimal impact on one-week prices but slightly lowers prices for short-term stays. Location could indeed be a key reason for the price differences. In urban areas where parking is scarce, listings without free parking may be in more desirable or central locations, which can drive up their price. Conversely, listings with free parking might be located in less central areas where parking is easier to offer, leading to lower prices for short-term stays. For one-month rentals, location might play less of a role in price differences, as long-term renters may prioritize other factors over parking, such as proximity to work or public transport.
+## Interactive Map with Nearest Restaurants
 
-**The effect of pet allowed**
+**Key Functions:** <br>
+`interactive_map`: Main function to display an interactive map with Michelin restaurants and compute nearest restaurant information.
+`query_data`: Utilize PostgreSQL's GIS capabilities to query restaurant data and convert it into a GeoDataFrame for spatial analysis.
+`get_nearest_restaurants`: Calculate the nearest restaurants to a user-selected point on the map using geometric distance computations.
 
-![Pet Policy Effect](./artifacts/combined_price_distributions.png)
-The graphs show price distributions for one-month, one-week, and one-day Airbnb listings, separated by whether pets are allowed or not.  In the One-Month Price Distribution (left), listings that allow pets (orange) are generally priced higher than those that do not, especially in the lower price ranges (up to $100). This suggests that pet-friendly long-term rentals may command a premium. In the One-Week Price Distribution (middle), a similar trend is observed, with pet-friendly listings taking a larger share in the higher price ranges compared to non-pet listings, though the difference is less pronounced than for one-month stays. For the One-Day Price Distribution (right), pet-friendly listings are more spread across various price ranges but still maintain a noticeable presence in the lower price brackets. The overall effect of allowing pets is less significant for one-day stays compared to longer-term rentals. Possible reasons for these differences include higher demand for pet-friendly listings, as renters with pets may be willing to pay more for accommodations that meet their needs, especially for long stays. Additionally, added costs for hosts associated with allowing pets, such as maintenance and cleaning, could lead to higher pricing, particularly for longer rental periods.
+**Processing Logic:**<br>
+The `interactive_map` function takes advantage of PostgreSQL's GIS capabilities to extract restaurant details, including geographic coordinates, via the `query_data` function. This data is converted into a GeoDataFrame, leveraging its geometry support for spatial computations. An interactive map is generated using Folium, where each restaurant is represented as a marker. When a user clicks on a point on the map, `get_nearest_restaurants` computes the 10 closest restaurants using spatial distance calculations provided by the GeoDataFrame's geometry. The results are displayed in a sorted table by star rating, providing users with an intuitive and interactive experience.
 
-**The effect of smoking allowed**
+![image](https://github.com/yishanyuan/Final_Project_2024/blob/main/artifacts/interactive_map.png) <br>
+![image](https://github.com/yishanyuan/Final_Project_2024/blob/main/artifacts/interactive_map_result.png)
 
-![Smoking Policy Effect](./artifacts/combined_boxplot_smoking_allowed_price.png)
-The boxplots show price distributions for one-month, one-week, and one-day Airbnb listings, comparing those that allow smoking versus those that do not. Listings that do not allow smoking tend to have higher prices and a wider price range, especially for one-month and one-week stays. This may be due to higher demand for non-smoking accommodations, particularly in family-friendly or urban areas, where smoking is less accepted. Non-smoking listings likely attract a broader market and are perceived as cleaner or more desirable, allowing hosts to charge a premium. Smoking-allowed listings, on the other hand, cater to a more niche audience, which could explain their lower prices and narrower price range, particularly for longer stays. For one-day stays, the price difference is less significant.
+<br>
 
 # Limitation
-While scraping and analyzing Airbnb listings can provide some valuable insights into market trends, limitations must be acknowledged. First, Airbnb limits each search to 15 pages of listings, which limits the number of listings that can be extracted and may result in a biased dataset that does not fully represent the market. Another limitation in the data cleaning process is the way missing data was handled. Rather than handling or imputing missing values, we chose to simply delete records with missing data(about 3%). This may result in the loss of potentially valuable information and may introduce bias if certain types of listings are more likely to have incomplete data. In addition, all prices in the dataset reflect only the base price and do not include cleaning fees and taxes, which may further affect the accuracy of the analysis, especially in markets where these additional fees vary greatly between listings. Moreover, location data is not taken into account, which may miss significant price changes affected by distance from the city center or tourist attractions. These limitations may affect the generalizability and accuracy of the results.
 
+1. Vector Search Limitations:<br>
+The current vector search relies on 384-dimensional embeddings generated by Sentence Transformers and PGVector. This dimensionality may result in better performance for multi-word queries compared to single-word queries, limiting the consistency of results across varying query lengths.<br>
+2. Limited Full-Text Search Data:<br>
+The dataset used for full-text search is relatively small, which restricts the diversity and richness of search results.
+
+<br>
 
 #  Further Research
-Future research could address these limitations by developing more sophisticated scraping methods that divide searches by smaller regions  to circumvent the page limit. Additionally, more advanced techniques can be used to hand missing data, such as imputation methods or machine learning models. These methods can work with incomplete datasets, would help retain more information. Exploring the impact of dynamic pricing on Airbnb listings, as prices fluctuate based on demand and seasonality, could offer more accurate insights into market trends. Moreover, integrating external data sources such as location-based metrics (e.g., neighborhood walkability or proximity to transport) could enhance the analysis. In addition, expanding the analysis to explore how various factors affect prices across cities can provide deeper insights into the pricing dynamics of each location. Exploring more detailed aspects of Airbnb listings could reveal important trends and factors influencing pricing. Future research could also apply predictive modeling to understand how features like property type, amenities, and location affect pricing, offering richer insights for market analysis.
+1. Enhancing the Machine Learning Model:<br>
+Experiment with machine learning models that support higher-dimensional vector representations to capture more intricate relationships and subtle nuances in the data. Incorporate advanced pre-trained language models (e.g., BERT or GPT-based embeddings) to enhance the quality and relevance of AI-powered search results.<br>
+2. Expanding the Dataset:<br>
+Integrate Google Reviews into the dataset to provide more context and enrich the information available for search and machine learning functionalities. Include data from other restaurant ranking systems or user-generated platforms, creating a more comprehensive and versatile dataset.<br>
+3. Real-Time Data Updates:<br>
+Develop automated ETL (Extract, Transform, Load) pipelines to regularly update Michelin data. This ensures the application always reflects the most current and accurate restaurant information.<br>
+4. Geographic Expansion:<br>
+Extend the dataset to include restaurants from regions not covered by the Michelin Guide, leveraging alternative restaurant evaluation platforms or open data sources to broaden geographic coverage.<br>
+<br>
+
+
+
+
+
+
+
 
