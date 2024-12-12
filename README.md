@@ -11,29 +11,27 @@ Michelin Offical Websites: https://guide.michelin.com/us/en
 Using the `python3 code/scrape.py` on the cmd to run the data.
 
 
-## Search For Michelin Restaurnats and Save Links
+## Search For Michelin Restaurants and Save Links
 
 **Key Functions in `scrape_page.py`:** <br>
 `scrape_page`: Scraping all links for each restaurants in one page and saving all links into a list.<br>
-`scrape_all_pages`: Save the extracted property links to a list.<br>
+`scrape_all_pages`: Save the extracted restaurant links to a list.<br>
 
 **Processing Logic:**
-The HTML content of each page is parsed with `BeautifulSoup` to extract restaurant's individual links. This process is repeated across all available pages by cahnging the number of page one by one until no more results are found. Finally, the extracted property links are saved to a list for scraping restaurant's details.
+The HTML content of each page is parsed with `BeautifulSoup` to extract restaurant's individual links. This process is repeated across all available pages by changing the number of page one by one until no more results are found. Finally, the extracted property links are saved to a list for scraping restaurant's details.
 
 
 ## Extract and Save Restaurant Details
 
 **Key Functions in `scrape_res.py` and `scrape.py`:** <br>
-`map_client`: Set up your API Key to identify yourself while scraping.<br>
-`get_name`, `get_address`, `get_country`, `get_price`, `get_type_food`, etc: Extract all restaurant's details including name, address, country, price, type of food, Michelin stars, description, facilities and services information, and geo-location respectively from each restaurant page.<br>
-`scrape_res_dict`: Save the extracted restaurants' details into a list.<br>
+`map_client`: Set up your API Key to identify yourself while scraping and create a client to access Google Places API.<br>
+`get_name`, `get_address`, `get_country`, `get_price`, `get_type_food`, etc: Extract all restaurant's details including name, address, country, price, type of food, Michelin stars, description, facilities and services information, and geo-location respectively from each restaurant page.<br>\
 `scrape_res`: Extract same details for each restaurant's url.<br>
-`scrape`: Scrape everything and return a list of restaurants.<br>
+`scrape_res_dict`: Save the extracted restaurants' details into a dictionary.<br>
+`scrape`: Scrapes links and restaurants details and return a list of restaurants information.<br>
 
 **Processing Logic:**
- Load property links from saved URLs from running `python code/scrape_pages.py`. For the individual link, the corresponding page is opened, and details such as restaurant's name, prices, and geo-locatio are extracted. The extracted information is then saved to a list first, then save as CSV file and JSON file.
-
-
+ Load restuarant links from saved URLs from running `python code/scrape_pages.py`. For the individual link, the corresponding page is opened, and details such as restaurant's name, prices, and geo-location are extracted. The extracted information is then saved to a list first, then save as CSV file and JSON file.
 # Clean Data
 
 Using the `python3 code/cleaned_data.py` on the cmd to run the data.
