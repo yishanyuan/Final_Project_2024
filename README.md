@@ -127,7 +127,7 @@ After processing all rows, the updated data is saved to a new file, `cleaned_dat
 
 ## Match SQL with pgvector
 
-Using the python3 code/match_sql.py on the cmd to run the matching logic.
+Using the `python3 code/match_sql.py` on the cmd to run the matching logic.
 
 ### **Key Functions:** <br>
 
