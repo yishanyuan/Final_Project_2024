@@ -26,7 +26,7 @@ The HTML content of each page is parsed with `BeautifulSoup` to extract restaura
 **Key Functions in `scrape_res.py` and `scrape.py`:** <br>
 `map_client`: Set up your API Key to identify yourself while scraping.<br>
 `get_name`, `get_address`, `get_country`, `get_price`, `get_type_food`, etc: Extract all restaurant's details including name, address, country, price, type of food, Michelin stars, description, facilities and services information, and geo-location respectively from each restaurant page.<br>
-`scrape_res_dict`: Save the extracted restaurants' details into a list.<br>
+`scrape_res_dict`: Save the extracted restaurants' details into a dictionary.<br>
 `scrape_res`: Extract same details for each restaurant's url.<br>
 `scrape`: Scrape everything and return a list of restaurants.<br>
 
