@@ -2,7 +2,7 @@
 ### Group Name: Pumpkin Pie
 
 # Goal of the project
-Are you tired of endless scrolling through reviews to find the fine dining experience? Our Michelin Guide: Vector-Based Dining Finder is designed to revolutionize the way you discover restaurants. By leveraging vector embeddings and similarity search, our tool transforms random user queries, like "truffle pasta with outdoor seating," into precise recommendations. Our project focuses on creating a vector database of Michelin-starred restaurants and reviews, coupled with an interactive dashboard to streamline the restaurant discovery process.
+Are you tired of endless googling to find the fine dining experience or want to have some good quality of food? Our Michelin Guide: Vector-Based Dining Finder is designed to revolutionize the way you discover restaurants from fine dining to local good. By leveraging vector embeddings and similarity search, our tool transforms random user queries, like "truffle pasta with outdoor seating," into precise recommendations. Our project focuses on creating a vector database of Michelin-starred restaurants and descriptions, coupled with an interactive dashboard to streamline the restaurant discovery process.
 
 # Source of dataset
 Michelin Offical Websites: https://guide.michelin.com/us/en
@@ -11,28 +11,27 @@ Michelin Offical Websites: https://guide.michelin.com/us/en
 Using the `python3 code/scrape.py` on the cmd to run the data.
 
 
-## Search For Michelin Listings and Save Links
+## Search For Michelin Restaurnats and Save Links
 
-**Key Functions:** <br>
-`open`: Initialize the headless browser using `Selenium` WebDriver with customized options.<br>
-`search`: Simulate an Airbnb search with specific parameters (location, check-in, check-out dates, and guest details) and extracts property links from the results.<br>
-`save_urls`: Save the extracted property links to a JSON file.<br>
-
-**Processing Logic:**
-The program begins by launching a headless browser using the `Selenium` WebDriver. It searches for property listings based on the specified cities and check-in/check-out dates. The HTML content of each page is parsed with `BeautifulSoup` to extract property links containing "/rooms/". This process is repeated across all available pages by clicking the "Next" button until no more results are found. Finally, the extracted property links are saved to a JSON file.
-
-
-## Extract and Save Room Details
-
-**Key Functions:** <br>
-`load_urls`: Load saved property links from a JSON file.<br>
-`get_room_details_page`: Load and parse the room details page using `BeautifulSoup`.<br>
-`extract_room_features`, `extract_price_info`, `extract_house_rules`: Extract room features, pricing details, and house rules respectively from each property page.<br>
-`save_to_json`: Save the extracted room details into a JSON file.<br>
-`close`: Close the `Selenium` WebDriver once all operations are completed.<br>
+**Key Functions in `scrape_page.py`:** <br>
+`scrape_page`: Scraping all links for each restaurants in one page and saving all links into a list.<br>
+`scrape_all_pages`: Save the extracted property links to a list.<br>
 
 **Processing Logic:**
- Load property links from a JSON file. For each link, the corresponding page is opened, and details such as room features, prices, and house rules are extracted. The extracted information is then saved to a JSON file. Once the extraction process is complete, the browser is closed.
+The HTML content of each page is parsed with `BeautifulSoup` to extract restaurant's individual links. This process is repeated across all available pages by cahnging the number of page one by one until no more results are found. Finally, the extracted property links are saved to a list for scraping restaurant's details.
+
+
+## Extract and Save Restaurant Details
+
+**Key Functions in `scrape_res.py` and `scrape.py`:** <br>
+`map_client`: Set up your API Key to identify yourself while scraping.<br>
+`get_name`, `get_address`, `get_country`, `get_price`, `get_type_food`, etc: Extract all restaurant's details including name, address, country, price, type of food, Michelin stars, description, facilities and services information, and geo-location respectively from each restaurant page.<br>
+`scrape_res_dict`: Save the extracted restaurants' details into a list.<br>
+`scrape_res`: Extract same details for each restaurant's url.<br>
+`scrape`: Scrape everything and return a list of restaurants.<br>
+
+**Processing Logic:**
+ Load property links from saved URLs from running `python code/scrape_pages.py`. For the individual link, the corresponding page is opened, and details such as restaurant's name, prices, and geo-locatio are extracted. The extracted information is then saved to a list first, then save as CSV file and JSON file.
 
 
 # Clean Data
