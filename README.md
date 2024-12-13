@@ -161,7 +161,7 @@ The Michelin Restaurant Finder is an interactive platform designed to explore an
 Displays Michelin-starred restaurants worldwide.Interactive hover feature shows the number of restaurants by country, along with their star distributions (0-star to 3-star).
 
 **Key Functions:** <br>
-`run_query()` : to connect to the database and retrieves required data.
+`run_query()` : to connect to the database and retrieves required data.<br>
 `create_map()`: the core function of the script, responsible for querying data from a database and saving the results as a CSV file.<br>
 `c.iso_code`and`c.country`:to group data by country and ISO codes <br>
 `hover_text`: to custom hover templates and dynamic integration with Streamlit for real-time exploratio<br>
@@ -184,10 +184,6 @@ Combines keyword-based searches with an AI recommendation system to find restaur
 `RestaurantMatcher.match()`: function processes the query to find restaurants matching the input using AI <br>
 `st.dataframe()`: to displays the formatted DataFrame with restaurant search results in an interactive table <br>
 `matcher.match()`: method processes the query using AI or natural language processing to find relevant results.<br>
-
-**Processing Logic:**<br>
-This application uses `create_map()` to query Michelin restaurant data, process it into a CSV, and visualize it with an interactive choropleth map via Plotly. The `get_filter_options()` function retrieves filter options from the database, and `run_query()` executes SQL queries for user-selected filters. `RestaurantMatcher().match()` powers the AI-based restaurant search. Results are displayed dynamically.<br>
-
 
 ## Interactive Map with Nearest Restaurants
 
