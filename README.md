@@ -162,7 +162,7 @@ Displays Michelin-starred restaurants worldwide.Interactive hover feature shows 
 `c.iso_code`and`c.country`:to group data by country and ISO codes <br>
 `hover_text`: to custom hover templates and dynamic integration with Streamlit for real-time exploratio<br>
 
-### **Description：**<br>
+**Description：**<br>
  The app uses Streamlit to create an interactive web interface with a world map visualization of the Michelin data. The `create_map` function queries a database to extract Michelin restaurant data, grouped by country. The data includes the total number of Michelin-starred restaurants and a breakdown by star levels (0-star, 1-star, 2-star, 3-star).Plotly's `choropleth` function is used to create a choropleth map showing the distribution of Michelin restaurants by country. The map's hover text provides detailed statistics for each country (e.g., total restaurants and breakdown by star level). <br>
 
 ## Dynamic Filtering
@@ -176,7 +176,7 @@ Star Rating; Country; Cuisine Type; Price Range
 `st.selectbox`: for dropdown (st.selectbox) for selecting the star rating<br>
 `st.slider`: for a slider (st.slider) for selecting the price range, ranging from 0 (cheapest) to 4 (most expensive).<br>
 
-### **Description：**<br>
+**Description：**<br>
 This filter provides a base query retrieves restaurant details, like name, cuisine, country, star rating, and price range. Additional conditions are appended dynamically to the WHERE clause based on the selected filters. This component of the application enables users to explore Michelin restaurants interactively based on their preferences, providing a filtered and organized view of the data. <br>
 
 ## AI-Powered Keyword SearchAI 
@@ -189,7 +189,7 @@ Combines keyword-based searches with an AI recommendation system to find restaur
 `st.dataframe()`: to displays the formatted DataFrame with restaurant search results in an interactive table <br>
 `matcher.match()`: method processes the query using AI or natural language processing to find relevant results.<br>
 
-### **Description：**<br>
+**Description：**<br>
 This part provides an interactive Search. It combines user-friendly text input with AI-based matching for flexible and intuitive restaurant exploration, complementing the more structured filtering capabilities.<br>
 
 
