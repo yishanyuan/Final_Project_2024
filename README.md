@@ -160,16 +160,33 @@ The Michelin Restaurant Finder is an interactive platform designed to explore an
 ![image](https://github.com/yishanyuan/Final_Project_2024/blob/main/artifacts/World_map.png) <br>
 Displays Michelin-starred restaurants worldwide.Interactive hover feature shows the number of restaurants by country, along with their star distributions (0-star to 3-star).
 
+**Key Functions:** <br>
+`run_query()` : to connect to the database and retrieves required data.
+`create_map()`: the core function of the script, responsible for querying data from a database and saving the results as a CSV file.<br>
+`c.iso_code`and`c.country`:to group data by country and ISO codes <br>
+`hover_text`: to custom hover templates and dynamic integration with Streamlit for real-time exploratio<br>
+
 ## Dynamic Filtering
 ![image](https://github.com/yishanyuan/Final_Project_2024/blob/main/artifacts/Filtered_results.png) <br>
 Filter restaurants based on:
 Star Rating; Country; Cuisine Type; Price Range
 
+**Key Functions:** <br>
+`get_filter_options()`: to execute a SQL query to fetch unique values for stars_label, country, and food_type from the database <br>
+`st.dataframe()` : to ensure its displayed as an interactive table in the Streamlit app<br>
+
 ## AI-Powered Keyword SearchAI 
 ![image](https://github.com/yishanyuan/Final_Project_2024/blob/main/artifacts/AI_search.png) <br>
-Combines keyword-based searches with an AI recommendation system to find restaurants matching specific descriptions (e.g., "delicious seafood restaurant").
+Combines keyword-based searches with an AI recommendation system to find restaurants matching specific descriptions (e.g., "delicious seafood restaurant").<br>
 
+**Key Functions:** <br>
+`st.text_input()`: for users to input a search query that describes their restaurant preferences<br>
+`RestaurantMatcher.match()`: function processes the query to find restaurants matching the input using AI <br>
+`st.dataframe()`: to displays the formatted DataFrame with restaurant search results in an interactive table <br>
+`matcher.match()`: method processes the query using AI or natural language processing to find relevant results.<br>
 
+**Processing Logic:**<br>
+This application uses `create_map()` to query Michelin restaurant data, process it into a CSV, and visualize it with an interactive choropleth map via Plotly. The `get_filter_options()` function retrieves filter options from the database, and `run_query()` executes SQL queries for user-selected filters. `RestaurantMatcher().match()` powers the AI-based restaurant search. Results are displayed dynamically.<br>
 
 
 ## Interactive Map with Nearest Restaurants
