@@ -7,6 +7,9 @@ Are you tired of endless googling to find the fine dining experience or want to 
 # Source of dataset
 Michelin Offical Websites: https://guide.michelin.com/us/en
 
+# Data Flow Chart
+![image] (https://github.com/yishanyuan/Final_Project_2024/blob/main/artifacts/data_flow_chart.jpg) <br>
+
 # Scrape Data
 Using the `python3 code/scrape.py` on the cmd to run the data.
 
