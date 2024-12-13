@@ -185,11 +185,11 @@ Combines keyword-based searches with an AI recommendation system to find restaur
 
 **Key Functions:** <br>
 `interactive_map`: Main function to display an interactive map with Michelin restaurants and compute nearest restaurant information.
-`query_data`: Utilize PostgreSQL's GIS capabilities to query restaurant data and convert it into a GeoDataFrame for spatial analysis.
+`query_data`: Query restaurant data and convert it into a GeoDataFrame for spatial analysis.
 `get_nearest_restaurants`: Calculate the nearest restaurants to a user-selected point on the map using geometric distance computations.
 
 **Processing Logic:**<br>
-The `interactive_map` function takes advantage of PostgreSQL's GIS capabilities to extract restaurant details, including geographic coordinates, via the `query_data` function. This data is converted into a GeoDataFrame, leveraging its geometry support for spatial computations. An interactive map is generated using Folium, where each restaurant is represented as a marker. When a user clicks on a point on the map, `get_nearest_restaurants` computes the 10 closest restaurants using spatial distance calculations provided by the GeoDataFrame's geometry. The results are displayed in a sorted table by star rating, providing users with an intuitive and interactive experience.
+The `interactive_map` function extracts restaurant details, including geographic coordinates, via the `query_data` function. This data is converted into a GeoDataFrame, leveraging its geometry support for spatial computations. An interactive map is generated using Folium, where each restaurant is represented as a marker. When a user clicks on a point on the map, `get_nearest_restaurants` computes the 10 closest restaurants using spatial distance calculations provided by the GeoDataFrame's geometry. The results are displayed in a sorted table by star rating, providing users with an intuitive and interactive experience.
 
 ![image](https://github.com/yishanyuan/Final_Project_2024/blob/main/artifacts/interactive_map.png) <br>
 ![image](https://github.com/yishanyuan/Final_Project_2024/blob/main/artifacts/interactive_map_result.png)
