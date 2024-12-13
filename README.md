@@ -103,7 +103,7 @@ Using the `python3 code/embedding.py` on the cmd to run the data.
 
 `load_csv`: Load the `cleaned_data.csv` file from the artifacts directory and ensure the file exists.<br>
 
-`validate_column`: Check whether the specified description column exists in the DataFrame loaded from `cleaned_data.csv`.<br>
+`validate_column`: Check whether the specified `description` column exists in the DataFrame loaded from `cleaned_data.csv`.<br>
 
 `generate_embeddings`: Generate sentence embeddings for the description column in `cleaned_data.csv` using the `all-MiniLM-L6-v2` model and store them in a new column named `embedding`.<br>
 
